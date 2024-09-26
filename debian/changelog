@@ -1,5 +1,1487 @@
-template-repository (1.0-1) unstable; urgency=medium
+emscripten (3.1.66~dfsg-2) unstable; urgency=medium
 
-  * Initial release
+  * QA upload
+  * debian/clean: Skip contrib ports
+    contrib.glfw3 downloads tarballs from github during build. To avoid the
+    download, disable the build of the glfw3 port.
 
- -- Tsic404 <liuheng@deepin.org>  Sat, 28 Jan 2023 13:46:49 +0800
+ -- Sebastian Ramacher <sramacher@debian.org>  Sat, 14 Sep 2024 23:54:34 +0200
+
+emscripten (3.1.66~dfsg-1) unstable; urgency=medium
+
+  [ Bastian Germann ]
+  * QA upload.
+  * d/copyright: Files-Excluded for next version.
+  * New upstream version 3.1.61~dfsg.
+  * Update patches for (re)moved files.
+  * Update to llvm 18. (Closes: #1061212)
+  * Download current emscripten-source-map.min.js.
+  * Use llvm 18 in patches
+
+  [ Sebastian Ramacher ]
+  * New upstream version 3.1.66~dfsg
+  * debian/patches/Refresh patches for new upstream version
+  * debian/missing-sources: Add new source-map-footer.js
+  * debian/rules: Update files to add/remove executable flag
+
+ -- Sebastian Ramacher <sramacher@debian.org>  Sat, 14 Sep 2024 14:58:58 +0200
+
+emscripten (3.1.6~dfsg-9) unstable; urgency=medium
+
+  * QA upload.
+  * Add upstream patch for Node 18
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Wed, 05 Jun 2024 15:58:13 +0200
+
+emscripten (3.1.6~dfsg-8) UNRELEASED; urgency=medium
+
+  * QA upload.
+  * Fix building twice in a row.  (Closes: #1044915)
+  * Add upstream metadata.
+
+ -- Andreas Beckmann <anbe@debian.org>  Tue, 16 Apr 2024 11:37:12 +0200
+
+emscripten (3.1.6~dfsg-7) unstable; urgency=medium
+
+  * QA upload.
+  * Switch to LLVM 15.
+  * Fix build with stricter flags.
+
+ -- Bastian Germann <bage@debian.org>  Sat, 16 Mar 2024 13:33:41 +0000
+
+emscripten (3.1.6~dfsg-6) unstable; urgency=medium
+
+  * QA upload.
+  * Add patch to fix build with new sphinx (Closes: #1042627)
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Tue, 31 Oct 2023 18:47:21 +0100
+
+emscripten (3.1.6~dfsg-5) unstable; urgency=medium
+
+  * QA upload.
+  * Set Vcs- fields for QA
+  * Disable tests to fix the build
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Sun, 10 Jul 2022 17:52:27 +0200
+
+emscripten (3.1.6~dfsg-4) unstable; urgency=medium
+
+  * QA upload.
+
+  [ Jonas Smedegaard ]
+  * update testsuite coverage
+  * orphan package: set maintainer to Debian QA Group
+
+  [ Jochen Sprickerhof ]
+  * Drop version locking for binaryen (Closes: #1011708)
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Tue, 05 Jul 2022 22:49:34 +0200
+
+emscripten (3.1.6~dfsg-3) experimental; urgency=medium
+
+  * update patch 2005 to use LLVM 14 (not 13);
+    unfuzz patch 2011;
+    (build-)depend on clang-14 lld-14 llvm-14
+    (not clang-13 lld-13 llvm-13)
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sat, 26 Feb 2022 20:01:32 +0100
+
+emscripten (3.1.6~dfsg-2) experimental; urgency=medium
+
+  * drop patches to avoid SjLj
+  * unfuzz patches
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sat, 26 Feb 2022 16:50:27 +0100
+
+emscripten (3.1.6~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * unfuzz patches
+  * update build routines to explicitly generate config file
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sat, 26 Feb 2022 12:44:49 +0100
+
+emscripten (3.1.5~dfsg-4) unstable; urgency=medium
+
+  * QA upload.
+  * Drop version locking for binaryen (Closes: #1011708).
+    It works with newer versions.
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Tue, 05 Jul 2022 14:06:13 +0200
+
+emscripten (3.1.5~dfsg-3) unstable; urgency=medium
+
+  * extend patch 1007
+    to skip failing test other.test_closure_type_annotations;
+    unfuzz patches
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 21 Feb 2022 21:41:57 +0100
+
+emscripten (3.1.5~dfsg-2) experimental; urgency=medium
+
+  * fix add another patch to avoid SjLj;
+    unfuzz patches
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 21 Feb 2022 14:22:41 +0100
+
+emscripten (3.1.5~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * add another patch to avoid SjLj
+  * unfuzz patches
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 21 Feb 2022 12:20:22 +0100
+
+emscripten (3.1.4~dfsg-7) unstable; urgency=medium
+
+  * fix autopkgtest
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 17 Feb 2022 13:00:38 +0100
+
+emscripten (3.1.4~dfsg-6) unstable; urgency=medium
+
+  * update testsuite coverage
+  * add patch 2014 to avoid root bypass of frozen cache
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 16 Feb 2022 21:46:17 +0100
+
+emscripten (3.1.4~dfsg-5) experimental; urgency=medium
+
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 16 Feb 2022 15:57:12 +0100
+
+emscripten (3.1.4~dfsg-4) experimental; urgency=medium
+
+  * fix install cache frozen
+  * update patch 2013: fix syntax for resolving wasm2c
+  * avoid installing cache sanity hint
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 16 Feb 2022 11:58:37 +0100
+
+emscripten (3.1.4~dfsg-3) experimental; urgency=medium
+
+  * add more patches to avoid SjLj;
+    add section about Wasm SjLj support to README.Debian
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 15 Feb 2022 23:24:26 +0100
+
+emscripten (3.1.4~dfsg-2) experimental; urgency=medium
+
+  * add patches to avoid SjLj using Wasm EH instructions
+  * extend patch 1007
+    to skip failing test other.test_closure_webgpu
+  * unfuzz patches
+  * install system-shared emscripten config file,
+    to not have it generated (and fail) initial call
+    to any emscripten tool
+  * build and install cache of non-port libraries;
+    drop section about code cache from README.Debian
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 15 Feb 2022 20:15:45 +0100
+
+emscripten (3.1.4~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * unfuzz patches
+  * generate html and plaintext documentation from upstream markdown;
+    build-depend on cmark-gfm
+  * update source-only part of upstream source-map script
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 15 Feb 2022 10:34:03 +0100
+
+emscripten (3.1.3~dfsg-5) unstable; urgency=medium
+
+  * improve support for closure-compiler:
+    + update patch 2009 to only fake version check,
+      which is broken in old closure-compiler in Debian
+      (i.e. drop broken changes to internal default)
+    + extend patch 2011
+      to use system-shared closure-compiler by default
+    + update README.Debian
+      with expected error message for too old closure-compiler
+    closes bug#1005294, thanks to Jeremy James
+  * avoid ccache (really not supported):
+    + drop patch 2014
+    + adjust build rules
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 11 Feb 2022 16:39:34 +0100
+
+emscripten (3.1.3~dfsg-4) unstable; urgency=medium
+
+  * fix avoid tests test_sdl2_config test_sdl2_ttf
+    requiring download of Emscripten port;
+    closes: bug#1004953, thanks to Gianfranco Costamagna
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 04 Feb 2022 11:11:18 +0100
+
+emscripten (3.1.3~dfsg-3) unstable; urgency=medium
+
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 03 Feb 2022 15:30:44 +0100
+
+emscripten (3.1.3~dfsg-2) unstable; urgency=medium
+
+  * update and tighten lintian overrides
+  * update testsuite coverage
+  * update TODOs
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 03 Feb 2022 12:02:22 +0100
+
+emscripten (3.1.3~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update watch file:
+    + ignore version of embedded type definitions,
+      to not confuse tracker.debian.org
+      (bug#1000969 fixed but website still failing)
+  * unfuzz patches
+  * update source-only part of upstream source-map script
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 03 Feb 2022 01:22:19 +0100
+
+emscripten (3.1.2~dfsg+~1.39.6-6) unstable; urgency=medium
+
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 31 Jan 2022 14:43:29 +0100
+
+emscripten (3.1.2~dfsg+~1.39.6-5) unstable; urgency=medium
+
+  * add patch 2012 to use older NodeJS module source-map
+  * really fix test targets
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 31 Jan 2022 11:42:32 +0100
+
+emscripten (3.1.2~dfsg+~1.39.6-4) unstable; urgency=medium
+
+  * fix test targets
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 31 Jan 2022 00:03:35 +0100
+
+emscripten (3.1.2~dfsg+~1.39.6-3) unstable; urgency=medium
+
+  * fix avoid test test_giflib requiring download of Emscripten port;
+    closes: bug#1004478, thanks to Gianfranco Costamagna
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 28 Jan 2022 14:06:49 +0100
+
+emscripten (3.1.2~dfsg+~1.39.6-2) experimental; urgency=medium
+
+  * update build hints to avoid running slow tests;
+    closes: bug#1004450, thanks to Gianfranco Costamagna
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 28 Jan 2022 10:24:20 +0100
+
+emscripten (3.1.2~dfsg+~1.39.6-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * update and unfuzz patches
+  * update copyright info: update coverage
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 21 Jan 2022 22:57:25 +0100
+
+emscripten (3.1.1~dfsg+~1.39.6-5) unstable; urgency=medium
+
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 17 Jan 2022 16:36:11 +0100
+
+emscripten (3.1.1~dfsg+~1.39.6-4) unstable; urgency=medium
+
+  * update patch 2015 and (build-)dependencies
+    to use newer binaryen
+  * update copyright info:
+    + use at most one Reference field per Files section
+    + wrap URIs in Reference fields with <>
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 17 Jan 2022 13:08:43 +0100
+
+emscripten (3.1.1~dfsg+~1.39.6-3) unstable; urgency=medium
+
+  * avoid tests which attempts to download files from a remote server;
+    closes: bug#1003621, thanks to Mike Gerow <gerow@google.com>
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 12 Jan 2022 20:21:24 +0100
+
+emscripten (3.1.1~dfsg+~1.39.6-2) unstable; urgency=medium
+
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 11 Jan 2022 20:32:10 +0100
+
+emscripten (3.1.1~dfsg+~1.39.6-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * extend patch 2001
+  * unfuzz patches
+  * update source-only part of upstream source-map script
+  * update copyright info: update coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 11 Jan 2022 13:12:31 +0100
+
+emscripten (3.1.0~dfsg+~1.39.6-4) unstable; urgency=medium
+
+  * update patch 1007
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 11 Jan 2022 16:19:11 +0100
+
+emscripten (3.1.0~dfsg+~1.39.6-3) experimental; urgency=medium
+
+  * update testsuite coverage to treat more phtread tests as unreliable;
+    closes: bug#1002758, thanks to Lucas Nussbaum
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 11 Jan 2022 00:22:56 +0100
+
+emscripten (3.1.0~dfsg+~1.39.6-2) experimental; urgency=medium
+
+  * update build-time test to tolerate EcmaScript 6
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 03 Jan 2022 14:17:30 +0100
+
+emscripten (3.1.0~dfsg+~1.39.6-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * unfuzz patches
+  * update copyright info: update coverage
+  * update autopkgtest to tolerate EcmaScript 6
+  * update README.Debian,
+    elaborating on transpiling and compression issues and workarounds
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 02 Jan 2022 21:32:03 +0100
+
+emscripten (3.0.1~dfsg+~1.39.6-2) unstable; urgency=medium
+
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 22 Dec 2021 10:59:24 +0100
+
+emscripten (3.0.1~dfsg+~1.39.6-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * update patch 2015 and (build-)dependencies to use newer binaryen
+  * unfuzz patches
+  * have emscripten suggest emscripten-doc
+  * tighten lintian overrides
+  * update copyright info: update coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 21 Dec 2021 23:34:44 +0100
+
+emscripten (3.0.0~dfsg+~1.39.6-4) unstable; urgency=high
+
+  * fix build-depend on node-source-map
+  * set urgency=high to unbreak emscripten for security fix in libolm3
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 13 Dec 2021 19:40:54 +0100
+
+emscripten (3.0.0~dfsg+~1.39.6-3) unstable; urgency=medium
+
+  * update patch 2015 and (build-)dependencies
+    to use newer binaryen
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 12 Dec 2021 12:52:35 +0100
+
+emscripten (3.0.0~dfsg+~1.39.6-2) unstable; urgency=medium
+
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 28 Nov 2021 00:54:47 +0100
+
+emscripten (3.0.0~dfsg+~1.39.6-1) unstable; urgency=medium
+
+  * update testsuite coverage
+  * fix symlink for executable emprofile
+  * generate man pages
+  * embed and install typescript types;
+    provide virtual package node-types-emscripten;
+    build-depend on jq
+    closes: bug#999460, thanks to Julien Puydt
+  * update copyright info: update coverage
+  * extend patch 2003 to cover typescript types
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sat, 27 Nov 2021 17:51:15 +0100
+
+emscripten (3.0.0~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  * update source-only part of upstream source-map script
+  * update copyright info:
+    + stop drop-when-repackaging a test file dropped upstream
+    + update coverage
+  * update and unfuzz patches
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 26 Nov 2021 22:15:45 +0100
+
+emscripten (2.0.34~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  * update and unfuzz patches
+  * update copyright info: update coverage
+  * update source-only part of upstream source-map script
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 26 Nov 2021 18:00:34 +0100
+
+emscripten (2.0.33~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  * update source-only part of upstream source-map script
+  * unfuzz patches
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 26 Nov 2021 13:07:06 +0100
+
+emscripten (2.0.32~dfsg-1) unstable; urgency=medium
+
+  * update source-only part of upstream source-map script
+  [ upstream ]
+  * new release
+
+  * drop patch cherry-picked upstream now applied
+  * update and unfuzz patches
+  * extend patch 2015 to apply tag-being-DCEed workaround
+    (partly reverting commit 5c93bd0)
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 26 Nov 2021 12:14:44 +0100
+
+emscripten (2.0.31~dfsg-2) unstable; urgency=medium
+
+  * extend patch 2005 to set unix macros
+    (partly reverting commit 8c097f62);
+    unfuzz patch 2008
+  * extend patch 1007 to cover test_webgpu_compiletest
+  * update README.Debian, listing more known LLVM-too-old error messages
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 26 Nov 2021 10:10:16 +0100
+
+emscripten (2.0.31~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * drop patch cherry-picked upstream now applied
+  * update and unfuzz patches
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 25 Nov 2021 18:39:54 +0100
+
+emscripten (2.0.30~dfsg-2) unstable; urgency=medium
+
+  * update patch 1007
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 25 Nov 2021 17:23:14 +0100
+
+emscripten (2.0.30~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * unfuzz patches
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 25 Nov 2021 12:38:08 +0100
+
+emscripten (2.0.29~dfsg-2) unstable; urgency=medium
+
+  * update testsuite coverage
+  * stop limit parallel builds
+    (bug#997064 seems tied to specific failing test)
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 25 Nov 2021 11:25:27 +0100
+
+emscripten (2.0.29~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * unfuzz patches
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 24 Nov 2021 13:20:23 +0100
+
+emscripten (2.0.28~dfsg-2) unstable; urgency=medium
+
+  * update README.Debian, documenting use of stable LLVM
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 24 Nov 2021 12:47:48 +0100
+
+emscripten (2.0.28~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * tighten to build-depend versioned on nodejs,
+    needed for option --trace-uncaught used in tests
+  * fix tighten to depend versioned on nodejs,
+    needed for option --unhandled-rejections
+  * drop patch 2012 adopted upstream
+  * update and unfuzz patches
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 24 Nov 2021 02:35:10 +0100
+
+emscripten (2.0.27~dfsg-6) unstable; urgency=medium
+
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 23 Nov 2021 02:21:46 +0100
+
+emscripten (2.0.27~dfsg-5) experimental; urgency=medium
+
+  * merge in unstable release 2.0.26~dfsg-8
+
+  [ Jonas Smedegaard ]
+  * add patch 2016 to support NodeJS v12.x
+  * update patch 2005 to use LLVM 13 (not 14);
+    (build-)depend on clang-13 lld-13 llvm-13
+    (not clang-14 lld-14 llvm-14)
+  * check a few tests strictly
+    (i.e. fail on error even when targeted experimental)
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 22 Nov 2021 13:47:09 +0100
+
+emscripten (2.0.27~dfsg-4) experimental; urgency=medium
+
+  * merge in unstable release 2.0.26~dfsg-7
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 18 Nov 2021 22:58:47 +0100
+
+emscripten (2.0.27~dfsg-3) experimental; urgency=medium
+
+  * merge in unstable releases 2.0.26~dfsg-5 2.0.26~dfsg-6
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 18 Nov 2021 14:43:46 +0100
+
+emscripten (2.0.27~dfsg-2) experimental; urgency=medium
+
+  * update testsuite coverage
+  * improve source helper script copyright-check
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sat, 28 Aug 2021 16:43:25 +0200
+
+emscripten (2.0.27~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update and unfuzz patches
+  * install new executable emprofile
+  * tighten (build-)dependency on clang lld llvm to use LLVM 14 (not 13)
+  * copyright info: update coverage
+  * update source-only part of upstream source-map script
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 19 Aug 2021 21:47:58 +0200
+
+emscripten (2.0.26~dfsg-8) unstable; urgency=medium
+
+  * update patch 2013 to reflect new wasm2c source path;
+    tighten build-dependency and suggestion on wabt
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 21 Nov 2021 18:29:00 +0100
+
+emscripten (2.0.26~dfsg-7) unstable; urgency=medium
+
+  * add patch cherry-picked upstrewam
+    to add C compile feature support for CMake 3.21;
+    unfuzz patch 2006
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 18 Nov 2021 22:45:59 +0100
+
+emscripten (2.0.26~dfsg-6) unstable; urgency=medium
+
+  * update testsuite coverage
+  * add README.Debian,
+    documenting tools installed to $PATH,
+    system libraries treated as cache files,
+    and closure compiler in Debian being too old
+  * update lintian overrides
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 18 Nov 2021 12:51:09 +0100
+
+emscripten (2.0.26~dfsg-5) unstable; urgency=medium
+
+  * add patch 2015 to bump expected binaryen version;
+    update and tighten (build-)dependency on binaryen,
+    and while at it add an upper limit as well
+  * update copyright info:
+    + use Reference field (not License-Reference);
+      tighten lintian overrides
+  * add patch cherry-picked upstream to use command -v (not which)
+  * limit parallel builds to max 2 cores;
+    hopefully closes: bug#997064, thanks to Lucas Nussbaum
+  * add patch 2013 to use system shared NodeJS modules
+  * work around dh_sphinx mysteriously failing
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 18 Nov 2021 04:44:14 +0100
+
+emscripten (2.0.26~dfsg-4) unstable; urgency=medium
+
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 20 Aug 2021 10:07:22 +0200
+
+emscripten (2.0.26~dfsg-3) unstable; urgency=medium
+
+  * update testsuite coverage
+  * update git-buildpackage config: use DEP-14 branch name debian/sid
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 19 Aug 2021 22:14:12 +0200
+
+emscripten (2.0.26~dfsg-2) unstable; urgency=medium
+
+  * fix reduce patch 2006 to not use system-shared WebIDL Binder
+  * fix handle system-shared emnm during build-time testing
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 19 Aug 2021 12:07:03 +0200
+
+emscripten (2.0.26~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * copyright info: update coverage
+  * unfuzz patches
+  * install new executable emnm
+  * tighten (build-)dependency on binaryen,
+    and update patch 2005 to no longer force-relax it
+  * declare compliance with Debian Policy 4.6.0
+  * drop patch 2013
+    (too cumbersome to maintain -
+    let's just skip involved tests as needed instead)
+  * update lintian override
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 18 Aug 2021 22:45:17 +0200
+
+emscripten (2.0.25~dfsg-7) experimental; urgency=medium
+
+  * fix extend patch 2006 to pass PATH through to SCons
+  * fix extend patch 2006 to cover other.test_emconfig
+  * tighten build-time testing by using a custom set of bin wrappers
+    (not add emscripten root dir to PATH)
+  * add patch 2014 for rudimentary ccache support
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 23 Jul 2021 15:31:29 +0200
+
+emscripten (2.0.25~dfsg-6) experimental; urgency=medium
+
+  * add patch  2013 to adjust codesizes in tests
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 22 Jul 2021 22:34:33 +0200
+
+emscripten (2.0.25~dfsg-5) experimental; urgency=medium
+
+  * fix extend patch 2006 to cover failing tests
+    test_openjpeg other.test_cmake_html other.test_cmake_stdproperty
+    other.test_emscons other.test_scons
+    (and numerous untested stuff)
+  * fix extend patch 1007 to skip failing test other.test_single_file
+  * unfuzz patches
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 22 Jul 2021 12:03:05 +0200
+
+emscripten (2.0.25~dfsg-4) experimental; urgency=medium
+
+  * extend patch 2006 to cover emcmake and emscons;
+    enable emcmake and emscons tests
+  * update testsuite coverage
+  * fix extend patch 1007, and unfuzz other patches
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 21 Jul 2021 14:13:08 +0200
+
+emscripten (2.0.25~dfsg-3) experimental; urgency=medium
+
+  * update patch 2005 to use LLVM 13 (like upstream now, but versioned)
+    and binaryen 100 (not 101 like upstream requires now);
+    tighten (build-)dependency on clang lld llvm
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 21 Jul 2021 00:21:15 +0200
+
+emscripten (2.0.25~dfsg-2) experimental; urgency=medium
+
+  * fix patch 2011
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 20 Jul 2021 13:08:20 +0200
+
+emscripten (2.0.25~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update and unfuzz patches
+  * copyright info: update coverage
+  * update source-only part of upstream source-map script
+  * update list of files needing executable bit set
+  * stop fix executable bits for JavaScript files
+    no longer included upstream
+  * update lintian overrides
+  * add patch 2012 to fix syntax error in python script
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 20 Jul 2021 11:21:00 +0200
+
+emscripten (2.0.16~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update and unfuzz patches
+  * copyright info: update coverage
+  * install new executables emdump emprofile
+  * update source-only part of upstream source-map script
+  * merge patch 2012 into patch 2004
+  * update patch 2005 to use LLVM 12 (not 11);
+    (build-)depend on versioned clang lld llvm;
+    improve build-time tests: enable tests related to error handling;
+    closes: bug#975069, thanks to Sebastien Jodogne
+  * stop fix executable bits for JavaScript files
+    no longer included upstream
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 19 Jul 2021 12:20:59 +0200
+
+emscripten (2.0.15~dfsg-1~rc1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * unfuzz patches
+  * update source-only part of upstream source-map script
+  * extend patch 2005 to revert passing LLVM option legacy-pass-manager,
+    not yet supported with LLVM 11
+  * tighten (build-)dependency on binaryen
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 19 Jul 2021 01:26:05 +0200
+
+emscripten (2.0.13~dfsg-1) experimental; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * copyright:
+    + update list of repackaging-excluded files
+    + update coverage
+  * update source-only part of upstream source-map script
+  * unfuzz patches
+  * use debhelper compatibility level 13 (not 12)
+  * update documentation source path
+  * fix really tighten build-dependency on binaryen
+    (not only runtime dependency),
+    as intended since 2.0.10~dfsg-1
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 18 Jul 2021 21:12:38 +0200
+
+emscripten (2.0.12~dfsg-2) unstable; urgency=medium
+
+  * build documentation;
+    build-depend on dh-sequence-sphinxdoc python3-sphinx;
+    closes: bug#987454, thanks to Adrian Bunk
+  * gbp config: set debian-branch=debian/sid
+  * add patch 2012 to avoid privacy breach in documentation
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 02 May 2021 18:34:23 +0200
+
+emscripten (2.0.12~dfsg-1) unstable; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * unfuzz patches
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 24 Jan 2021 14:04:06 +0100
+
+emscripten (2.0.11~dfsg-1) unstable; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * copyright: tighten coverage of Public-Domain files
+  * add patch 2010 to avoid npm during build
+  * unfuzz patches
+  * update testsuite coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 24 Jan 2021 14:16:47 +0100
+
+emscripten (2.0.10~dfsg-1) unstable; urgency=medium
+
+  [ upstream ]
+  * new release;
+    closes: bug#979405, thanks to Andreas Beckmann
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * copyright: update coverage
+  * drop patches 1003 1006 obsoleted by upstream changes
+  * update and unfuzz patches
+  * update testsuite coverage;
+    closes: bug#976520, thanks to Lucas Nussbaum
+  * copyright: update coverage
+  * tighten build-dependency on binaryen
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 24 Jan 2021 10:16:41 +0100
+
+emscripten (2.0.8~dfsg1-12) unstable; urgency=medium
+
+  * drop patch 2010 (llvm 11 is now default);
+    unfuzz patch 2011
+  * (build-)depend (only) on non-version clang lld llvm
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sat, 05 Dec 2020 02:08:09 +0100
+
+emscripten (2.0.8~dfsg1-11) unstable; urgency=medium
+
+  * fix patch 1007 and test exclude lists
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 30 Nov 2020 13:33:11 +0100
+
+emscripten (2.0.8~dfsg1-10) unstable; urgency=medium
+
+  * improve testsuite coverage:
+    + add patch 1007 to support skipping closure-compiler in tests,
+      stop excluding whole test files with closure-compiler tests,
+      and instead skip closure-compiler in tests
+    + add patch 1008 to avoid hardcoding tool name,
+      and stop excluding test files failing with versioned LLVM
+  * unfuzz patch 2007
+  * declare compliance with Debian Policy 4.5.1
+  * use dpkg make snippet to resolve parallel builds
+  * copyright:
+    + fix cover file licensed bzip2-1.0.6
+    + fix use license shortname LGPL-2+ for unversioned licensing
+      (not LGPL-1+ because that version does not exist)
+    + fix add license sections for LGPL-2.1 LGPL-3
+  * override more License-Reference lintian warnings
+  * fix override double-wildcard lintian warnings
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 29 Nov 2020 15:47:38 +0100
+
+emscripten (2.0.8~dfsg1-9) unstable; urgency=medium
+
+  * Revert to (build-)depend on llvm-11 or llvm
+    (not llvm-11-runtime or llvm-runtime)
+  * update git-buildpackage config to use debian branch debian/sid
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 17 Nov 2020 20:18:50 +0100
+
+emscripten (2.0.8~dfsg1-8) unstable; urgency=medium
+
+  * copyright: tighten coverage;
+    closes: bug#939477, thanks to Matthias Klose
+  * reduce testsuite coverage:
+    + stop test all JS engines
+      (documented as testing engines more than this code)
+    + skip slow tests
+  * (build-)depend on llvm-11-runtime or llvm-runtime
+    (not llvm-11 or llvm)
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 17 Nov 2020 14:33:39 +0100
+
+emscripten (2.0.8~dfsg1-7) unstable; urgency=medium
+
+  * fix avoid check closure-compiler related tests
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 04 Nov 2020 14:15:50 +0100
+
+emscripten (2.0.8~dfsg1-6) unstable; urgency=medium
+
+  * check wasm2js* modes only in experimental,
+    as they fail with BlockingIOError
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 04 Nov 2020 11:55:26 +0100
+
+emscripten (2.0.8~dfsg1-5) unstable; urgency=medium
+
+  * check tests in more chunks,
+    to try mitigate log loss
+    from "write could not complete without blocking" issues
+  * fix negative check for wasm2c
+    (not repeat check for succeeding tests)
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 04 Nov 2020 03:36:37 +0100
+
+emscripten (2.0.8~dfsg1-4) experimental; urgency=medium
+
+  * drop obsolete lintian overrides
+  * extract metadata from (not skip) wav files
+  * add patch 1006
+    to have testsuite respect LLVM_ADD_VERSION for llvm-dwarfdump
+  * tighten check of failing tests
+  * build-depend on fonts-liberation
+  * extend patch 1004 to cover closure-compiler
+  * add patch 2010
+    to detect and use non-default llvm-11 by default
+  * add patch 2011
+    to detect and use system shared binaryen
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 04 Nov 2020 00:12:01 +0100
+
+emscripten (2.0.8~dfsg1-3) experimental; urgency=medium
+
+  * tighten build-time check to execute in fewer larger batches
+  * fix build-depend on (not only suggest) scons
+  * skip check of tests failing in mode other
+  * check tests in modes wasm* now succeeding
+  * explicitly state modes to check,
+    and skip avoided modes also in experimental negative check
+  * skip check tests needing node module wasm2c
+  * support DEB_BUILD_OPTIONS=parallel,
+    and always use a single core for experimental failure check
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 03 Nov 2020 16:12:42 +0100
+
+emscripten (2.0.8~dfsg1-2) experimental; urgency=medium
+
+  * copyright:
+    + fix drop duplicate Files section
+    + fix drop obsolete Files sections
+  * avoid strict mode causing multiple failures
+  * avoid a test failing in mode wasm1
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 03 Nov 2020 03:58:47 +0100
+
+emscripten (2.0.8~dfsg1-1) experimental; urgency=medium
+
+  * repackage source tarball:
+    + avoid convenience code copies:
+      - python module ply (packaged separately)
+      - Java Native Interface forked with added emjvm.js
+        (seemingly unused)
+  * drop obsolete lintian overrides
+  * build-depend on and suggest python3-ply,
+    and document its use in long description
+  * update patches 1001 2003 for omitted source files
+  * add patch 2009 to use system-shared closure-compiler
+  * add patch 1005 to make build reproducible;
+    closes: bug#973595, thanks to Chris Lamb
+  * avoid checking tests requiring closure-compiler
+  * copyright: tighten coverage of musl
+  * adjust build routines for omitted source files
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 02 Nov 2020 16:36:23 +0100
+
+emscripten (2.0.8~dfsg-7~exp) experimental; urgency=medium
+
+  * copyright: tighten coverage of llvm-project/compiler-rt libc++
+  * check all important non-browser tests during build
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 01 Nov 2020 18:23:05 +0100
+
+emscripten (2.0.8~dfsg-6) unstable; urgency=medium
+
+  * set EM_CACHE during build and autopkgtest (not fake HOME)
+  * check known failing tests only when targeted experimental
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 29 Oct 2020 20:21:39 +0100
+
+emscripten (2.0.8~dfsg-5) unstable; urgency=medium
+
+  * Revert to re-add patch 2006 and extend patch 2003
+    (undefined symbol error was caused by unsupported CFLAGS)
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 27 Oct 2020 18:34:53 +0100
+
+emscripten (2.0.8~dfsg-4) unstable; urgency=medium
+
+  * drop patch 2006 and reduce patch 2003,
+    to (hopefully) fix undefined symbol error
+    using emscripten as non-root
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 27 Oct 2020 01:18:03 +0100
+
+emscripten (2.0.8~dfsg-3) unstable; urgency=medium
+
+  * skip more failing tests
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 26 Oct 2020 21:50:49 +0100
+
+emscripten (2.0.8~dfsg-2) unstable; urgency=medium
+
+  * skip more failing tests
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 26 Oct 2020 20:17:47 +0100
+
+emscripten (2.0.8~dfsg-1) unstable; urgency=medium
+
+  [ upstream ]
+  * new release
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * unfuzz patches
+  * tighten (build-)dependency on binaryen
+  * copyright: tighten coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 26 Oct 2020 18:15:49 +0100
+
+emscripten (2.0.7~dfsg1-5) unstable; urgency=medium
+
+  * fix re-enable patch 2006
+    (needed at runtime with upstream wrappers removed),
+    and add working directory to PATH during build
+  * lintian:
+    + override false positive
+      on left-truncated wildcards files in copyright file
+    + drop obsolete overrides
+  * update patch 2001 with files completely missing shebang,
+    and set/unset executable bits during build
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sat, 17 Oct 2020 09:13:27 +0200
+
+emscripten (2.0.7~dfsg1-4) unstable; urgency=medium
+
+  * copyright:
+    + fix typo: restore accidentally deleted Files tag
+    + drop unused License section
+  * disable patch 2006 (breaks build-time testing)
+  * use ccache during build-time tests when available
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 16 Oct 2020 22:15:28 +0200
+
+emscripten (2.0.7~dfsg1-3) unstable; urgency=medium
+
+  * copyright:
+    + fix list wildcard files before non-covered explicit files
+    + fix list right-truncated wildcard files (e.g. embedded projects)
+      before left-truncated (e.g. generated files)
+  * fix autopkgtest
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 16 Oct 2020 20:56:35 +0200
+
+emscripten (2.0.7~dfsg1-2) unstable; urgency=medium
+
+  * stop depend on (only suggest) cmake
+  * add patch 2006
+    to call emscripten scripts in PATH when called from emscripten
+  * stop compile and ship cache (ignored when read-only)
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 16 Oct 2020 18:40:14 +0200
+
+emscripten (2.0.7~dfsg1-1) unstable; urgency=medium
+
+  * repackage source tarball:
+    + avoid more source-less code
+    + avoid only fonts and non-free image from website
+      (not whole website source)
+  * copyright:
+    + fix typo: declare License-Grant
+      (not bogus duplicate License)
+    + tighten coverage of terser and uglify-js
+  * tell dh_strip to ignore webassembly code
+  * revert to not set FROZEN_CACHE
+    closes: bug#972324, thanks to Giovanni Mascellani
+  * fix revert to build arch-independent package
+    (webassembly is binary but architecture-independent)
+  * hardcode settings (don't provide as conffile),
+    and adjust autopkgtest to fail if missing
+  * use one shared wrapper for em* executables in PATH,
+    and update patch 2003 to not ship upstream wrappers
+  * suggest automake cmake make scons,
+    and document their use in long description
+  * override lintian for source-is-missing false positives
+  * fix post-update command in README.source
+  * add TODO on building upstream documentation website
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 16 Oct 2020 16:45:22 +0200
+
+emscripten (2.0.7~dfsg-3) unstable; urgency=medium
+
+  * fix typo in changelog
+  * fix avoid compiling code in architecture-independent build
+  * fix install source-related docs only in main package
+  * copyright:
+    + fix drop superfluous overlapping Files sections
+  * copyright:
+    + fix update file paths
+    + tighten coverage of poppler
+    + tighten coverage of sdl
+    + tighten coverage of openjpeg
+    + tighten coverage of zlib
+    + tighten coverage of musl
+  * fix revert to install ports.
+  * skip a test failing on armhf
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 15 Oct 2020 22:24:28 +0200
+
+emscripten (2.0.7~dfsg-2) unstable; urgency=medium
+
+  * stop use closure-compiler:
+    + stop build-depend on closure-compiler
+    + reduce patch 2006 to not detect closure-compiler
+    + add TODO note on Debian package being too old
+  * use htmlmin:
+    + reduce patch 2005 to not avoid html minification by default
+    + add patch 2008 to call htmlmin instead of html-minifier-terser
+    + build-depend on htmlmin
+  * unfuzz patch 2007
+  * add patch 1004 to silence warning with acorn 8
+  * fix DEP-3 header of patch 1003
+  * improve tests:
+    + redirect initial command output to stdout;
+      redo test with option -O3
+    + use hello_world.c as source for simple tests
+      (not hello_world.cc)
+    + check upstream testsuite during build
+  * fix update patch 2003
+    to ship documentation files needed by runtime scripts,
+    and add TODO on compiling upstream paper
+  * update patch 2003 to avoid installing upstream tests,
+    except hello_world.c used in tools
+  * install system config file;
+    reduce patch 2005 and drop patch 2006;
+    explicitly set config during build
+  * fix generate header file dom_pk_codes.h during build
+  * compile non-port libraries and ship as system cache,
+    and revert to build architecture-specific package
+  * avoid installing ports
+  * fix support nocheck in DEB_BUILD_OPTIONS
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 15 Oct 2020 12:57:46 +0200
+
+emscripten (2.0.7~dfsg-1) unstable; urgency=medium
+
+  [ upstream ]
+  * new release(s)
+
+  [ Jonas Smedegaard ]
+  * update source-only part of upstream source-map script
+  * add patch 1003 to fix python3 syntax
+  * suggest adb, and document its use in long description
+  * fix cleanup test output, to not accidentally install it
+  * fix autopkgtest
+  * copyright: update coverage
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 14 Oct 2020 02:07:09 +0200
+
+emscripten (2.0.5~dfsg2-1) unstable; urgency=medium
+
+  * Repackage source tarball,
+    also avoiding generated file system/include/neon/arm_neon.h
+  * add patch 1002 to avoid obsolete GNU-specific find syntax;
+    closes: bug#803028, thanks to Andreas Metzler
+  * build-depend on and suggest wabt,
+    and document its use in long description
+  * rename patch 2006_binaryen_path to 2006_use_system-shared_tools,
+    and rephrase for more general scope in DEP-3 header
+  * use system-shared closure-compiler:
+    + extend patch 2006 to detect closure-compiler
+    + build-depend on and suggest closure-compiler
+    + stop depend on libclosure-compiler-java
+    closes: bug#775146, thanks to Riku Saikkonen
+  * generate header file neon.h during build;
+    build-depend on libsimde-dev
+  * fix build-depend (not only depend) on node-acorn
+  * fix stop depend on node-terser node-uglify
+    (older embedded copies used for now)
+  * fix avoid html minification by default,
+    and add TODO on needing node-html-minifier package in Debian
+  * use eslint:
+    + add patch 2007 to call eslint instead of es-check
+    + build-depend on eslint
+  * check minimal functional test,
+    both during build and as autopkgtest
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 13 Oct 2020 21:42:55 +0200
+
+emscripten (2.0.5~dfsg1-2) unstable; urgency=medium
+
+  * rename patch pythonpath to 1001_python_path
+  * rename patch unusual-interpreter-fix to 2001_explicit_shebang
+  * extend patches 1001 2001 to cover third_party files,
+    and add DEP-3 headers
+  * fix extend patch 2003 to avoid third_party files
+    which confuses lintian or breaks python3 packaging hook
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 13 Oct 2020 11:58:21 +0200
+
+emscripten (2.0.5~dfsg1-1) unstable; urgency=medium
+
+  * fix revert to include third-party libraries
+    when repackaging upstream source
+    (needed anyway - only third-party _tests_ are optional)
+  * copyright: add coverage of closure-compiler
+  * use embedded node libraries for now,
+    (system-shared libraries are too new):
+    + stop build-depend on node-uglify
+    + drop patch 2001
+    + add TODO about pending work for acorn terser uglify
+  * fix (build-)depend on cmake
+  * fix build-depend on and recommend python3-numpy
+  * fix build-depend on binaryen, and tighten dendency
+  * fix use system tools:
+    + build-depend on clang-11 lld-11 llvm-11 nodejs
+    + update patch 2005
+    + add patch 2006 to locate binaryen
+  * adjust build rules
+    to support versioned ~dfsg version suffix
+  * update source script copyright-check:
+    + isolate closure-compiler
+    + fix isolate musl
+    add TODO about pending parts
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 13 Oct 2020 09:52:35 +0200
+
+emscripten (2.0.5~dfsg-2) unstable; urgency=medium
+
+  * fix ship wrappers properly resolving emscripten path
+    (upstream wrappers cannot be simply symlinked)
+  * tighten dependencies:
+    + add patch 2005 to relax expected release of llvm
+      (upstream expected v12.0 is not yet in Debian)
+    + fix depend on clang-11 llvm-11 (not clang llvm)
+    + fix depend on binaryen lld-11 node-acorn node-terser
+    closes: bug#809997, thanks to Ralf Treinen
+  * copyright:
+    + fix add License sections for GPL-2 GPL-3+ LGPL-2
+    + add more lintian overrides
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 06 Oct 2020 20:00:27 +0200
+
+emscripten (2.0.5~dfsg-1) unstable; urgency=medium
+
+  [ upstream ]
+  * new release(s)
+
+  [ Jonas Smedegaard ]
+  * copyright:
+    + update repackaging hints for newer upstream source
+    + tighten coverage for default licensed files
+    + stop track gone websockify
+    + fix typos
+  * update source-only part of upstream source-map script
+  * build with python3 (not python2);
+    build-depend on dh-sequence-python3 python3
+    (not dh-sequence-python2 python2)
+  * drop obsolete patches;
+    unfuzz and update remaining patches
+  * fix upstream release versioning:
+    + add patch 2002 to avoid git during build
+    + work around outdated upstream version hint
+  * symlink new executables embuilder emcmake emrun emsize
+  * stop ship outdated manpages
+  * tighten install:
+    + add patch 2003
+      to avoid upstream install script installing packaging files
+    + fix install path
+    + use dh_missing --fail-missing
+  * use package section optional (not obsolete extra)
+  * avoid privacy leaks in html code:
+    + add patch 2004 to strip live-status links in documentation,
+      and to use system shared D3
+    + recommend libjs-d3
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 05 Oct 2020 21:06:55 +0200
+
+emscripten (1.22.1+dfsg-1) unstable; urgency=medium
+
+  * add git-buildpackage config:
+    + use pristine-tar
+    + sign tags
+    + filter any .git* files
+    + use DEP-14 branch names
+  * use debhelper compatibility level 12 (not 8);
+    build-depend on debhelper-compat (not debhelper)
+  * update watch file:
+    + use file format 4
+    + use substitution strings
+    + rewrite usage comment
+  * use system-shared uglify-js:
+    + add patch 2001 to fix module loading
+    + stop obsolete symlinking during build
+  * modernize source tarball repackaging, with suffix ~dfsg
+  * avoid more precompiled, duplicate or superfluous code
+    when repackaging source tarball
+  * simplify build:
+    + use dh_link
+    + use dh_install option --exclude
+    + drop no longer needed hints
+    + list static rule last
+  * fix stop symlink executables with .py extension
+  * build with python2 (not python);
+    build-depend on dh-sequence-python2 python2
+    (not python-all)
+  * drop obsolete NEWS and README.source
+  * copyright:
+    + update Source and Upstream-Contact URLs
+    + fix typo in Upstream-Name
+    + use https protocol in file format URL
+    + use wildcard in Files sections
+    + normalize license shortnames
+    + use License sections with License-Reference field;
+      add corresponding lintian overrides (see bug#786450)
+    + fix stop track gone files
+    + normalize copyright years,
+      and strip bogus copyright holders
+    + merge related and identically licensed Files sections
+    + tighten coverage of autotools, freetype, bullet, glui and freeglut
+    + add coverage for debian directory
+  * fix build as architecture-independent package
+  * handle hybrid source and source-less script:
+    + remove when repackaging upstream source tarball
+    + document how to fetch source part
+    + merge parts during build
+    + build-depend on libjs-source-map
+  * save source-only part of upstream source-map script
+  * fix drop ancient obsolete lintian overrides
+  * drop Debian-added source file unneeded since v1.38.11,
+    and drop related lintian overrides
+  * update paths in lintian overrides
+  * friendly take-over:
+    + Update fields Maintainer Uploaders Vcs-*
+      to reflect maintenance in Javascript team
+    thanks for your past contributions to Sylvestre Ledru
+  * declare compliance with Debian Policy 4.5.0
+  * set Rules-Requires-Root: no
+  * add source script copyright-check
+  * update patch unusual-interpreter-fix
+  * unfuzz patches
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 05 Oct 2020 13:45:40 +0200
+
+emscripten (1.22.1-1) unstable; urgency=medium
+
+  * New upstream release (Closes: #748923)
+  * Upstream uses now tag. Use them instead of a repack script
+  * Update the clang version dependency from clang-X.Y to clang now they
+    are co instalable (Closes: #748840)
+  * Disable fastcomp. We don't want to manage a fork of llvm in emscripten
+    and not sure we want to add this patch in llvm itself (yet).
+  * Add missing sources (Closes: #753956)
+  * Use node-uglify package (Closes: #753883)
+  * Fix vcs-field-not-canonical
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Fri, 04 Jul 2014 13:06:38 +0200
+
+emscripten (1.10.0~20140205~ef1e460-1) unstable; urgency=medium
+
+  * New snapshot release
+  * Also install cmake / emscripten files. Thanks to Daniele Di Proietto
+    for the patch
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Wed, 05 Feb 2014 18:46:19 +0100
+
+emscripten (1.9.0~20140119~7dc8c2f-1) unstable; urgency=low
+
+  * New snapshot release (Closes: #733714)
+  * Provide sources for javascript and flash. Done in orig-tar.sh
+    Available in third_party/websockify/include/web-socket-js/src/
+    (Closes: #735903)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sun, 19 Jan 2014 14:12:40 +0100
+
+emscripten (1.7.8~20131216~1a007b1-1) unstable; urgency=low
+
+  * New snapshot release
+  * demos/ is removed upstream. Doing the same in the package
+  * remove some extra-license-file
+  * Silent unusual-interpreter & python-script-but-no-python-dep
+  * Standards-Version updated to 3.9.5
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 16 Dec 2013 15:01:29 +0100
+
+emscripten (1.5.6~20130920~6010666-1) unstable; urgency=low
+
+  * New snapshot release
+  * Update the list of supported architectures to the same as libv8
+    (Closes: #723129)
+  * emlibtool has been removed from upstream.
+  * Fix warning syntax-error-in-dep5-copyright
+  * Refresh of the patches
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Fri, 20 Sep 2013 22:44:35 +0200
+
+emscripten (1.4.9~20130620~0ad8724-1) unstable; urgency=low
+
+  * New snapshot release
+  * Depends against the "llvm" package. This package will provide llvm-dis
+    needed by emscripten. Thanks to Sam Hocevar for finding the reason.
+  * Fix the debhelper-but-no-misc-depends warning on emscripten-doc
+  * Override warning "unusual-interpreter" with nodejs
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 20 Jun 2013 17:14:15 +0200
+
+emscripten (1.4.7~20130611~a1eb425-1) unstable; urgency=low
+
+  * New snapshot release
+  * Upload to unstable
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 11 Jun 2013 15:45:24 +0200
+
+emscripten (1.4.7~20130606~98ba795-1) experimental; urgency=low
+
+  * New upstream release
+  * Update the dependencies (clang 3.2, 3.3 & 3.4)
+  * Also install emscons
+  * Remove the empty README.Debian
+  * Fix some warnings "extra-license-file"
+  * Fix the warning manpage-has-useless-whatis-entry for emcc and em++
+  * Remove some lintian overrides (I fixed them upstream)
+  * Silent the warnings "package-contains-devhelp-file-without-symlink"
+  * Fix some warning "unusual-interpreter" by using directly /usr/bin/nodejs
+  * Generate the manpages on the fly thanks to help2man
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 06 Jun 2013 10:59:42 +0200
+
+emscripten (1.4.1~20130504~adb56cb-1) unstable; urgency=low
+
+  * Initial release (Closes: #704906)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 02 May 2013 13:11:51 +0200

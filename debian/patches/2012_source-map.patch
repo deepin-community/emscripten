@@ -1,0 +1,57 @@
+Description: use older NodeJS module source-map
+ Debian package node-source-map is too old
+ (see bug#1004658).
+ .
+ This patch essentially reverts upstream git commit 21df9ee.
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2022-01-31
+---
+ package.json           |  2 +-
+ test/sourcemap2json.js | 13 ++++++-------
+ test/test_core.py      |  3 ++-
+ 3 files changed, 9 insertions(+), 9 deletions(-)
+
+--- a/package.json
++++ b/package.json
+@@ -8,7 +8,7 @@
+     "eslint-config-prettier": "^9.1.0",
+     "globals": "^15.9.0",
+     "prettier": "^3.3.3",
+-    "source-map": "0.7.4",
++    "source-map": "0.6.1",
+     "typescript": "^5.5.4",
+     "webpack": "^5.94.0",
+     "webpack-cli": "^5.1.4",
+--- a/test/sourcemap2json.js
++++ b/test/sourcemap2json.js
+@@ -12,12 +12,11 @@
+ var SourceMapConsumer = require('source-map').SourceMapConsumer;
+ var fs = require('fs');
+ 
+-new SourceMapConsumer(fs.readFileSync(process.argv[2], 'utf-8')).then((consumer) => {
+-  var mappings = [];
++var consumer = new SourceMapConsumer(fs.readFileSync(process.argv[2], 'utf-8'));
++var mappings = [];
+ 
+-  consumer.eachMapping(function(mapping) {
+-    mappings.push(mapping);
+-  });
+-
+-  console.log(JSON.stringify(mappings, null, 2));
++consumer.eachMapping(function(mapping) {
++  mappings.push(mapping);
+ });
++
++console.log(JSON.stringify(mappings));
+--- a/test/test_core.py
++++ b/test/test_core.py
+@@ -7748,7 +7748,8 @@
+ 
+     self.emcc(os.path.abspath('src.cpp'),
+               self.get_emcc_args(),
+-              out_filename)
++              out_filename,
++              stderr=PIPE)
+     map_referent = out_filename if self.is_wasm2js() else wasm_filename
+     # after removing the @line and @sourceMappingURL comments, the build
+     # result should be identical to the non-source-mapped debug version.

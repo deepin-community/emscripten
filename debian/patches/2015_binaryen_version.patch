@@ -1,0 +1,18 @@
+Description: use newer binaryen
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2021-09-14
+---
+ tools/building.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/tools/building.py
++++ b/tools/building.py
+@@ -39,7 +39,7 @@
+ 
+ #  Building
+ binaryen_checked = False
+-EXPECTED_BINARYEN_VERSION = 119
++EXPECTED_BINARYEN_VERSION = 108
+ 
+ _is_ar_cache: Dict[str, bool] = {}
+ # the exports the user requested

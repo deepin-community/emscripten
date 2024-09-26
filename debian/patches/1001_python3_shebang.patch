@@ -1,0 +1,22 @@
+Description: consistently use python3 in shebang
+Author: Jonas Smedegaard <dr@jones.dk>
+Bug: https://github.com/emscripten-core/emscripten/issues/12803
+Last-Update: 2020-10-13
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tools/scons/site_scons/site_tools/emscripten/__init__.py
++++ b/tools/scons/site_scons/site_tools/emscripten/__init__.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python2
++#!/usr/bin/env python3
+ # Copyright 2012 The Emscripten Authors.  All rights reserved.
+ # Emscripten is available under two separate licenses, the MIT license and the
+ # University of Illinois/NCSA Open Source License.  Both these licenses can be
+--- a/tools/scons/site_scons/site_tools/emscripten/emscripten.py
++++ b/tools/scons/site_scons/site_tools/emscripten/emscripten.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python2
++#!/usr/bin/env python3
+ # Copyright 2012 The Emscripten Authors.  All rights reserved.
+ # Emscripten is available under two separate licenses, the MIT license and the
+ # University of Illinois/NCSA Open Source License.  Both these licenses can be

@@ -1,0 +1,234 @@
+Description: call emscripten scripts in PATH when called from emscripten
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2020-10-16
+---
+ cmake/Modules/Platform/Emscripten.cmake       |  6 ++--
+ test/common.py                                |  6 ++--
+ test/test_benchmark.py                        |  2 +-
+ test/test_core.py                             |  4 +--
+ test/test_other.py                            | 30 +++++++++----------
+ tools/building.py                             |  4 +--
+ tools/maybe_wasm2js.py                        |  2 +-
+ .../site_tools/emscripten/emscripten.py       | 14 ++++-----
+ tools/shared.py                               | 14 ++++-----
+ 9 files changed, 39 insertions(+), 43 deletions(-)
+
+--- a/cmake/Modules/Platform/Emscripten.cmake
++++ b/cmake/Modules/Platform/Emscripten.cmake
+@@ -60,7 +60,7 @@
+ # Locate where the Emscripten compiler resides in relative to this toolchain file.
+ if (NOT DEFINED EMSCRIPTEN_ROOT_PATH)
+   get_filename_component(GUESS_EMSCRIPTEN_ROOT_PATH "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
+-  if (EXISTS "${GUESS_EMSCRIPTEN_ROOT_PATH}/emranlib")
++  if (EXISTS "${GUESS_EMSCRIPTEN_ROOT_PATH}/emranlib.py")
+     set(EMSCRIPTEN_ROOT_PATH "${GUESS_EMSCRIPTEN_ROOT_PATH}")
+   else()
+     # If not found by above search, locate using the EMSCRIPTEN environment variable.
+@@ -201,12 +201,12 @@
+   endif()
+ endif()
+ 
+-execute_process(COMMAND "${EMSCRIPTEN_ROOT_PATH}/em-config${EMCC_SUFFIX}" "CACHE"
++execute_process(COMMAND "em-config${EMCC_SUFFIX}" "CACHE"
+   RESULT_VARIABLE _emcache_result
+   OUTPUT_VARIABLE _emcache_output
+   OUTPUT_STRIP_TRAILING_WHITESPACE)
+ if (NOT _emcache_result EQUAL 0)
+-  message(FATAL_ERROR "Failed to find emscripten cache directory with command \"'${EMSCRIPTEN_ROOT_PATH}/em-config${EMCC_SUFFIX}' CACHE\"! Process returned with error code ${_emcache_result}.")
++  message(FATAL_ERROR "Failed to find emscripten cache directory with command \"'em-config${EMCC_SUFFIX}' CACHE\"! Process returned with error code ${_emcache_result}.")
+ endif()
+ file(TO_CMAKE_PATH "${_emcache_output}" _emcache_output)
+ set(EMSCRIPTEN_SYSROOT "${_emcache_output}/sysroot")
+--- a/test/common.py
++++ b/test/common.py
+@@ -83,8 +83,8 @@
+ 
+ WEBIDL_BINDER = shared.bat_suffix(path_from_root('tools/webidl_binder'))
+ 
+-EMBUILDER = shared.bat_suffix(path_from_root('embuilder'))
+-EMMAKE = shared.bat_suffix(path_from_root('emmake'))
++EMBUILDER = shared.bat_suffix('embuilder')
++EMMAKE = shared.bat_suffix('emmake')
+ EMRUN = shared.bat_suffix(shared.path_from_root('emrun'))
+ WASM_DIS = Path(building.get_binaryen_bin(), 'wasm-dis')
+ LLVM_OBJDUMP = os.path.expanduser(shared.build_llvm_tool_path(shared.exe_suffix('llvm-objdump')))
+@@ -1312,7 +1312,7 @@
+     return num_funcs
+ 
+   def count_wasm_contents(self, wasm_binary, what):
+-    out = self.run_process([os.path.join(building.get_binaryen_bin(), 'wasm-opt'), wasm_binary, '--metrics'], stdout=PIPE).stdout
++    out = self.run_process(['wasm-opt', wasm_binary, '--metrics'], stdout=PIPE).stdout
+     # output is something like
+     # [?]        : 125
+     for line in out.splitlines():
+--- a/test/test_benchmark.py
++++ b/test/test_benchmark.py
+@@ -197,7 +197,7 @@
+ 
+ def run_binaryen_opts(filename, opts):
+   run_process([
+-    os.path.join(building.get_binaryen_bin(), 'wasm-opt', '--all-features'),
++    'wasm-opt', '--all-features',
+     filename,
+     '-o', filename
+   ] + opts)
+--- a/test/test_core.py
++++ b/test/test_core.py
+@@ -7862,7 +7862,7 @@
+     self.assertLess(get_dwarf_addr(7, 3), get_dwarf_addr(8, 3))
+ 
+     # Get the wat, printing with -g which has binary offsets
+-    wat = self.run_process([Path(building.get_binaryen_bin(), 'wasm-opt'),
++    wat = self.run_process(['wasm-opt',
+                            wasm_filename, '-g', '--print'], stdout=PIPE).stdout
+ 
+     # We expect to see a pattern like this in optimized builds (there isn't
+@@ -8382,7 +8382,7 @@
+         return False
+       create_file('wat.wat', wat)
+       shutil.move(name, name + '.orig')
+-      self.run_process([Path(building.get_binaryen_bin(), 'wasm-as'), 'wat.wat', '-o', name, '-g', '--all-features'])
++      self.run_process(['wasm-as', 'wat.wat', '-o', name, '-g', '--all-features'])
+       return True
+ 
+     def verify_working(args):
+--- a/test/test_other.py
++++ b/test/test_other.py
+@@ -50,13 +50,13 @@
+ from tools.settings import settings
+ 
+ scons_path = shutil.which('scons')
+-emmake = shared.bat_suffix(path_from_root('emmake'))
+-emconfig = shared.bat_suffix(path_from_root('em-config'))
+-emsize = shared.bat_suffix(path_from_root('emsize'))
+-emprofile = shared.bat_suffix(path_from_root('emprofile'))
+-emstrip = shared.bat_suffix(path_from_root('emstrip'))
+-emsymbolizer = shared.bat_suffix(path_from_root('emsymbolizer'))
+-wasm_opt = Path(building.get_binaryen_bin(), 'wasm-opt')
++emmake = shared.bat_suffix('emmake')
++emconfig = shared.bat_suffix('em-config')
++emsize = shared.bat_suffix('emsize')
++emprofile = shared.bat_suffix('emprofile')
++emstrip = shared.bat_suffix('emstrip')
++emsymbolizer = shared.bat_suffix('emsymbolizer')
++wasm_opt = 'wasm-opt'
+ 
+ 
+ def is_bitcode(filename):
+@@ -3157,7 +3157,7 @@
+   def test_emscons(self):
+     shutil.copytree(test_file('scons/simple'), 'test')
+     with utils.chdir('test'):
+-      self.run_process([path_from_root('emscons'), 'scons'])
++      self.run_process(['emscons', 'scons'])
+       output = self.run_js('scons_integration.js', assert_returncode=5)
+     self.assertContained('If you see this - the world is all right!', output)
+ 
+@@ -3534,10 +3534,10 @@
+   def test_emconfig(self):
+     output = self.run_process([emconfig, 'LLVM_ROOT'], stdout=PIPE).stdout.strip()
+     self.assertEqual(output, config.LLVM_ROOT)
+-    # EMSCRIPTEN_ROOT is kind of special since it should always report the locaton of em-config
+-    # itself (its not configurable via the config file but driven by the location for arg0)
++    # EMSCRIPTEN_ROOT is kind of special since it should always report a static location
++    # (its not configurable via the config file but driven by the install path)
+     output = self.run_process([emconfig, 'EMSCRIPTEN_ROOT'], stdout=PIPE).stdout.strip()
+-    self.assertEqual(output, os.path.dirname(emconfig))
++    self.assertEqual(output, path_from_root())
+     invalid = 'Usage: em-config VAR_NAME'
+     # Don't accept variables that do not exist
+     output = self.expect_fail([emconfig, 'VAR_WHICH_DOES_NOT_EXIST']).strip()
+@@ -6770,8 +6770,8 @@
+ import os
+ print(os.environ.get('CROSS_COMPILE'))
+ ''')
+-    check(EMCONFIGURE, [PYTHON, 'test.py'], expect=path_from_root('em'), fail=False)
+-    check(emmake, [PYTHON, 'test.py'], expect=path_from_root('em'), fail=False)
++    check(EMCONFIGURE, [PYTHON, 'test.py'], expect='em', fail=False)
++    check(emmake, [PYTHON, 'test.py'], expect='em', fail=False)
+ 
+     create_file('test.py', '''
+ import os
+@@ -12822,7 +12822,7 @@
+     self.assertExists('test_split_module.wasm.orig')
+     self.assertExists('profile.data')
+ 
+-    wasm_split = os.path.join(building.get_binaryen_bin(), 'wasm-split')
++    wasm_split = 'wasm-split'
+     wasm_split_run = [wasm_split, '-g', '--enable-mutable-globals', '--export-prefix=%', 'test_split_module.wasm.orig', '-o1', 'primary.wasm', '-o2', 'secondary.wasm', '--profile=profile.data']
+     if jspi:
+       wasm_split_run += ['--jspi', '--enable-reference-types']
+@@ -12863,7 +12863,7 @@
+     self.assertExists('test_split_main_module.wasm.orig')
+     self.assertExists('profile.data')
+ 
+-    wasm_split = os.path.join(building.get_binaryen_bin(), 'wasm-split')
++    wasm_split = 'wasm-split'
+     self.run_process([wasm_split, '-g',
+                       'test_split_main_module.wasm.orig',
+                       '--export-prefix=%',
+--- a/tools/building.py
++++ b/tools/building.py
+@@ -67,7 +67,7 @@
+   env['EMSCRIPTEN'] = path_from_root()
+   env['PATH'] = cache.get_sysroot_dir('bin') + os.pathsep + env['PATH']
+   env['ACLOCAL_PATH'] = cache.get_sysroot_dir('share/aclocal')
+-  env['CROSS_COMPILE'] = path_from_root('em') # produces /path/to/emscripten/em , which then can have 'cc', 'ar', etc appended to it
++  env['CROSS_COMPILE'] = 'em' # produces /path/to/emscripten/em , which then can have 'cc', 'ar', etc appended to it
+   return env
+ 
+ 
+@@ -1180,7 +1180,7 @@
+ 
+ 
+ def run_binaryen_command(tool, infile, outfile=None, args=None, debug=False, stdout=None):
+-  cmd = [os.path.join(get_binaryen_bin(), tool)]
++  cmd = [tool]
+   if args:
+     cmd += args
+   if infile:
+--- a/tools/maybe_wasm2js.py
++++ b/tools/maybe_wasm2js.py
+@@ -41,7 +41,7 @@
+ 
+ # main
+ 
+-cmd = [os.path.join(building.get_binaryen_bin(), 'wasm2js'), '--emscripten', wasm_file]
++cmd = ['wasm2js', '--emscripten', wasm_file]
+ cmd += opts
+ js = shared.run_process(cmd, stdout=subprocess.PIPE).stdout
+ # assign the instantiate function to where it will be used
+--- a/tools/scons/site_scons/site_tools/emscripten/emscripten.py
++++ b/tools/scons/site_scons/site_tools/emscripten/emscripten.py
+@@ -30,7 +30,7 @@
+     'EMCC_CORES', 'EMCC_NO_OPT_SORT', 'EMCC_BUILD_DIR',
+     'EMCC_DEBUG_SAVE', 'EMCC_SKIP_SANITY_CHECK', 'EM_PKG_CONFIG_PATH',
+     'EMCC_CLOSURE_ARGS', 'EMCC_FORCE_STDLIBS',
+-    'EMCC_ONLY_FORCED_STDLIBS', 'EM_PORTS', 'IDL_CHECKS', 'IDL_VERBOSE']
++    'EMCC_ONLY_FORCED_STDLIBS', 'EM_PORTS', 'IDL_CHECKS', 'IDL_VERBOSE', 'PATH']
+ 
+   pkg_config_vars = {
+     'EMSCONS_PKG_CONFIG_LIBDIR': 'PKG_CONFIG_LIBDIR',
+--- a/tools/shared.py
++++ b/tools/shared.py
+@@ -822,13 +822,13 @@
+ LLVM_STRIP = os.path.expanduser(build_llvm_tool_path(exe_suffix('llvm-strip')))
+ WASM_LD = os.path.expanduser(build_llvm_tool_path(exe_suffix('wasm-ld')))
+ 
+-EMCC = bat_suffix(path_from_root('emcc'))
+-EMXX = bat_suffix(path_from_root('em++'))
+-EMAR = bat_suffix(path_from_root('emar'))
+-EMRANLIB = bat_suffix(path_from_root('emranlib'))
+-EMCMAKE = bat_suffix(path_from_root('emcmake'))
+-EMCONFIGURE = bat_suffix(path_from_root('emconfigure'))
+-EM_NM = bat_suffix(path_from_root('emnm'))
++EMCC = bat_suffix('emcc')
++EMXX = bat_suffix('em++')
++EMAR = bat_suffix('emar')
++EMRANLIB = bat_suffix('emranlib')
++EMCMAKE = bat_suffix('emcmake')
++EMCONFIGURE = bat_suffix('emconfigure')
++EM_NM = bat_suffix('emnm')
+ FILE_PACKAGER = bat_suffix(path_from_root('tools/file_packager'))
+ WASM_SOURCEMAP = bat_suffix(path_from_root('tools/wasm-sourcemap'))
+ # Windows .dll suffix is not included in this list, since those are never

@@ -1,0 +1,34 @@
+Description: explicit call executable in shebang
+ Omit python3: Handled by packaging routines
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2020-10-13
+---
+ test/sourcemap2json.js    | 2 +-
+ tools/acorn-optimizer.mjs | 2 +-
+ tools/lz4-compress.mjs    | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+--- a/test/sourcemap2json.js
++++ b/test/sourcemap2json.js
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env node
++#!/usr/bin/node
+ // Copyright 2013 The Emscripten Authors.  All rights reserved.
+ // Emscripten is available under two separate licenses, the MIT license and the
+ // University of Illinois/NCSA Open Source License.  Both these licenses can be
+--- a/tools/acorn-optimizer.mjs
++++ b/tools/acorn-optimizer.mjs
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env node
++#!/usr/bin/node
+ 
+ import * as acorn from 'acorn';
+ import * as terser from '../third_party/terser/terser.js';
+--- a/tools/lz4-compress.mjs
++++ b/tools/lz4-compress.mjs
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env node
++#!/usr/bin/node
+ // Copyright 2015 The Emscripten Authors.  All rights reserved.
+ // Emscripten is available under two separate licenses, the MIT license and the
+ // University of Illinois/NCSA Open Source License.  Both these licenses can be

@@ -1,0 +1,16 @@
+Description: use versioned LLVM
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2024-03-16
+---
+ tools/config_template.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/tools/config_template.py
++++ b/tools/config_template.py
+@@ -47,3 +47,6 @@
+ # Other options
+ #
+ # FROZEN_CACHE = True # never clears the cache, and disallows building to the cache
++
++LLVM_ADD_VERSION = '18'
++CLANG_ADD_VERSION = '18'

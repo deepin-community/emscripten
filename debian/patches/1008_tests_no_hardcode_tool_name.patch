@@ -1,0 +1,44 @@
+--- a/test/test_other.py
++++ b/test/test_other.py
+@@ -8467,7 +8467,7 @@
+     self.assertContained('emcc: error: cannot write output file `.`: Is a directory', ret)
+ 
+     ret = self.expect_fail([EMCC, test_file('hello_world.c'), '-o', '.', '--oformat=wasm'])
+-    self.assertContained('wasm-ld: error: cannot open output file .:', ret)
++    self.assertContained('error: cannot open output file .:', ret)
+     # Linux/Mac and Windows's error messages are slightly different
+     self.assertContained(['Is a directory', 'is a directory'], ret)
+ 
+@@ -9242,8 +9242,8 @@
+ 
+   def test_error_on_missing_libraries(self):
+     # -llsomenonexistingfile is an error by default
+-    err = self.expect_fail([EMCC, test_file('hello_world.c'), '-lsomenonexistingfile'])
+-    self.assertContained('wasm-ld: error: unable to find library -lsomenonexistingfile', err)
++    err = self.expect_fail([EMXX, test_file('hello_world.c'), '-lsomenonexistingfile'])
++    self.assertContained('error: unable to find library -lsomenonexistingfile', err)
+ 
+   # Tests that if user accidentally attempts to link native object code, we show an error
+   def test_native_link_error_message(self):
+@@ -9260,7 +9260,7 @@
+         }
+     ''')
+     err = self.expect_fail([EMCC, 'src.c', '-sSTACK_SIZE=1KB', '-sINITIAL_MEMORY=64KB'])
+-    self.assertContained('wasm-ld: error: initial memory too small', err)
++    self.assertContained('error: initial memory too small', err)
+ 
+   def test_o_level_clamp(self):
+     for level in (3, 4, 20):
+@@ -11967,10 +11967,10 @@
+ 
+   def test_linker_flags_pass_through(self):
+     err = self.expect_fail([EMCC, test_file('hello_world.c'), '-Wl,--waka'])
+-    self.assertContained('wasm-ld: error: unknown argument: --waka', err)
++    self.assertContained('error: unknown argument: --waka', err)
+ 
+     err = self.expect_fail([EMCC, test_file('hello_world.c'), '-Xlinker', '--waka'])
+-    self.assertContained('wasm-ld: error: unknown argument: --waka', err)
++    self.assertContained('error: unknown argument: --waka', err)
+ 
+     err = self.run_process([EMCC, test_file('hello_world.c'), '-z', 'foo'], stderr=PIPE).stderr
+     self.assertContained('wasm-ld: warning: unknown -z value: foo', err)

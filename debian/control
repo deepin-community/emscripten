@@ -1,15 +1,103 @@
-Source: template-repository
-Section: unknown
+Source: emscripten
+Section: devel
 Priority: optional
-Maintainer: Tsic404 <liuheng@deepin.org>
-Build-Depends: debhelper (>= 11)
-Standards-Version: 4.1.3
-Homepage: https://github.com/deepin-community/template-repository
-#Vcs-Browser: https://salsa.debian.org/debian/deepin-community-template-repository
-#Vcs-Git: https://salsa.debian.org/debian/deepin-community-template-repository.git
+Maintainer: Debian QA Group <packages@qa.debian.org>
+Build-Depends:
+ binaryen <!nocheck>,
+ clang-18 <!nocheck>,
+ cmake <!nocheck>,
+ cmark-gfm <!nodoc>,
+ debhelper-compat (= 13),
+ dh-sequence-python3,
+ eslint <!nocheck>,
+ fonts-liberation <!nocheck>,
+ help2man,
+ htmlmin <!nocheck>,
+ jq,
+ libjs-source-map,
+ libsimde-dev,
+ lld-18 <!nocheck>,
+ llvm-18 <!nocheck>,
+ node-acorn <!nocheck>,
+ node-source-map <!nocheck>,
+ nodejs (>= 12.16) <!nocheck>,
+ python3,
+ python3-numpy <!nocheck>,
+ python3-ply <!nocheck>,
+ scons <!nocheck>,
+ wabt (>= 1.0.24-2~) <!nocheck>,
+Build-Depends-Indep:
+ dh-sequence-sphinxdoc <!nocheck>,
+ python3-sphinx <!nodoc>,
+Standards-Version: 4.6.0
+Homepage: http://emscripten.org/
+Vcs-Browser: https://salsa.debian.org/debian/emscripten
+Vcs-Git: https://salsa.debian.org/debian/emscripten.git
+Rules-Requires-Root: no
 
-Package: template-repository
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: <insert up to 60 chars description>
- <insert long description, indented with spaces>
+Package: emscripten
+Architecture: all
+Depends:
+ binaryen,
+ clang-18,
+ lld-18,
+ llvm-18,
+ node-acorn,
+ nodejs (>= 12),
+ ${misc:Depends},
+ ${python3:Depends},
+Recommends:
+ libjs-d3,
+ python3-numpy,
+Suggests:
+ adb,
+ automake,
+ closure-compiler,
+ cmake,
+ emscripten-doc,
+ make,
+ python3-ply,
+ scons,
+ wabt (>= 1.0.24-2~),
+Provides:
+ node-types-emscripten (= ${types:Version}),
+Description: LLVM-to-JavaScript Compiler
+ Emscripten is an LLVM to JavaScript compiler. It takes LLVM bitcode, also
+ called LLVM IR (which can be generated from C/C++ using Clang, or any other
+ language that can be converted into LLVM bitcode) and compiles that into
+ JavaScript, which can be run on the web (or anywhere else JavaScript can run).
+ .
+ Using Emscripten, you can
+   * Compile C and C++ code into JavaScript and run that on the web
+   * Run code in languages like Python as well, by compiling CPython from C
+     to JavaScript and interpreting code in that on the web
+ .
+ Some uses of emscripten require additional packages:
+  * setting WASM2C requires wabt (at least release 1.0.24-2).
+  * emcmake requires cmake.
+  * emconfigure may require automake.
+  * emmake requires make.
+  * emrun option --android requires adb.
+  * emscons requires scons.
+  * WebIDL Binder requires python3-ply.
+
+Package: emscripten-doc
+Section: doc
+Depends:
+ ${misc:Depends},
+ ${sphinxdoc:Depends},
+Built-Using:
+ ${sphinxdoc:Built-Using},
+Architecture: all
+Description: LLVM-to-JavaScript Compiler
+ Emscripten is an LLVM to JavaScript compiler. It takes LLVM bitcode, also
+ called LLVM IR (which can be generated from C/C++ using Clang, or any other
+ language that can be converted into LLVM bitcode) and compiles that into
+ JavaScript, which can be run on the web (or anywhere else JavaScript can run).
+ .
+ Using Emscripten, you can
+   * Compile C and C++ code into JavaScript and run that on the web
+   * Run code in languages like Python as well, by compiling CPython from C
+     to JavaScript and interpreting code in that on the web
+ .
+ This package contains the documentation.

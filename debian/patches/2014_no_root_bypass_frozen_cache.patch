@@ -1,0 +1,18 @@
+Description: avoid root bypass of frozen cache
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2022-02-16
+---
+ tools/config.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/tools/config.py
++++ b/tools/config.py
+@@ -80,7 +80,7 @@
+   WASM_ENGINES = [listify(engine) for engine in WASM_ENGINES]
+   CLOSURE_COMPILER = listify(CLOSURE_COMPILER)
+   if not CACHE:
+-    if FROZEN_CACHE or root_is_writable():
++    if FROZEN_CACHE:
+       CACHE = path_from_root('cache')
+     else:
+       # Use the legacy method of putting the cache in the user's home directory

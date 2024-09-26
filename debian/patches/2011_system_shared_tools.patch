@@ -1,0 +1,27 @@
+Description: detect and use system shared helper tools by default
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2022-02-11
+---
+ tools/config.py          | 1 +
+ tools/config_template.py | 1 +
+ 2 files changed, 2 insertions(+)
+
+--- a/tools/config.py
++++ b/tools/config.py
+@@ -205,6 +205,7 @@
+   config_data = config_data.replace('\'{{{ BINARYEN_ROOT }}}\'', repr(binaryen_root))
+ 
+   node = shutil.which('node') or shutil.which('nodejs') or 'node'
++
+   config_data = config_data.replace('\'{{{ NODE }}}\'', repr(node))
+ 
+   # write
+--- a/tools/config_template.py
++++ b/tools/config_template.py
+@@ -48,5 +48,6 @@
+ #
+ # FROZEN_CACHE = True # never clears the cache, and disallows building to the cache
+ 
++CLOSURE_COMPILER = 'closure-compiler'
+ LLVM_ADD_VERSION = '18'
+ CLANG_ADD_VERSION = '18'

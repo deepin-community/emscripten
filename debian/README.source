@@ -1,0 +1,17 @@
+Unusual maintenance routines for emscripten source package
+==========================================================
+
+
+Hybrid source-map script
+------------------------
+
+Upstream source contains one hybrid source-and-source-less script:
+src/emscripten-source-map.min.js
+
+After import of a new upstream source,
+run this command to fetch that file and strip source-less part:
+
+  debian/rules get-source-map-footer
+
+
+  -- Jonas Smedegaard <dr@jones.dk>,  Fri, 16 Oct 2020 16:44:10 +0200

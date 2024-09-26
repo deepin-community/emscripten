@@ -1,0 +1,22 @@
+Description: support NodeJS v12.x
+ NodeJS option --unhandled-rejections was introduced in v12.0.0
+ but option value "throw" was introduced later.
+ .
+ See <https://nodejs.org/docs/latest-v12.x/api/cli.html#cli_unhandled_rejections_mode>
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2021-11-22
+---
+ test/common.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/test/common.py
++++ b/test/common.py
+@@ -1069,7 +1069,7 @@
+         if node_version < (15, 0, 0):
+           # Opt in to node v15 default behaviour:
+           # https://nodejs.org/api/cli.html#cli_unhandled_rejections_mode
+-          self.node_args.append('--unhandled-rejections=throw')
++          self.node_args.append('--unhandled-rejections=strict')
+ 
+       # If the version we are running tests in is lower than the version that
+       # emcc targets then we need to tell emcc to target that older version.

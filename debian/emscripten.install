@@ -1,0 +1,2 @@
+Xtypes/package.json Xtypes/*.d.ts /usr/share/nodejs/@types/emscripten
+debian/bin/wrapper debian/bin/wrapper-tools debian/tmp/* debian/.emscripten /usr/share/emscripten

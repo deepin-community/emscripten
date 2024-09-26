@@ -1,0 +1,84 @@
+Description: avoid install packaging files
+ Also avoid third-party files unused at runtime,
+ confusing packaging routines.
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2020-10-05
+---
+ tools/install.py | 41 +++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 39 insertions(+), 2 deletions(-)
+
+--- a/tools/install.py
++++ b/tools/install.py
+@@ -17,6 +17,10 @@
+ import subprocess
+ import sys
+ 
++INCLUDES = '''
++tests/hello_world.c
++'''
++
+ EXCLUDES = [os.path.normpath(x) for x in '''
+ test/third_party
+ tools/maint
+@@ -27,10 +31,43 @@
+ cache
+ cache.lock
+ bootstrap.py
++.circleci
++.github
++.pc
++AUTHORS
++ChangeLog.md
++CONTRIBUTING.md
++debian
++docs/graph.png
++docs/packaging.md
++docs/paper.tex
++docs/process.md
++emar
++embuilder
++emcc
++emcmake
++em-config
++emconfigure
++emmake
++em++
++emranlib
++emrun
++emscons
++emsize
++emscripten-version.txt.orig
++LICENSE
++package.json
++package-lock.json
++README.md
++requirements-dev.txt
++third_party/websockify
++tests
++Xtypes
+ '''.split()]
+ 
+ EXCLUDE_PATTERNS = '''
+ *.pyc
++*.bat
+ .*
+ __pycache__
+ '''.split()
+@@ -61,7 +98,7 @@
+         remove_dirs.append(d)
+         continue
+       fulldir = os.path.normpath(os.path.join(root, d))
+-      if fulldir in EXCLUDES:
++      if fulldir in EXCLUDES and not fulldir in INCLUDES:
+         remove_dirs.append(d)
+         continue
+       os.makedirs(os.path.join(target, fulldir))
+@@ -76,7 +113,7 @@
+         logger.debug('skipping file: ' + os.path.join(root, f))
+         continue
+       full = os.path.normpath(os.path.join(root, f))
+-      if full in EXCLUDES:
++      if full in EXCLUDES and not full in INCLUDES:
+         logger.debug('skipping file: ' + os.path.join(root, f))
+         continue
+       logger.debug('installing file: ' + os.path.join(root, f))
