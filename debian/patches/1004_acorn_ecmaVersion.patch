@@ -1,0 +1,47 @@
+Description: use latest ecmaVersion
+ Acorn 8.0.0 introduced ecmaScript 'latest'
+ to be as relaxed as possible,
+ and at the same time made defining ecmaScript mandatory.
+ .
+ This patch declares ecmaScript at both places it is used
+ to avoid warning when upgrading to acon 8,
+ and while at it switches to this new 'latest'.
+ .
+ Also, corresponding closure-compiler option is updated.
+ .
+ See also <https://github.com/emscripten-core/emscripten/issues/11303#issuecomment-698673424>
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2020-11-04
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tools/acorn-optimizer.js
++++ b/tools/acorn-optimizer.js
+@@ -949,7 +949,7 @@
+ 
+ // Need a parser to pass to acorn.Node constructor.
+ // Create it once and reuse it.
+-const stubParser = new acorn.Parser({ecmaVersion: 2020});
++const stubParser = new acorn.Parser({ecmaVersion: 'latest'});
+ 
+ function createNode(props) {
+   const node = new acorn.Node(stubParser);
+@@ -1844,7 +1844,7 @@
+ try {
+   ast = acorn.parse(input, {
+     // Keep in sync with --language_in that we pass to closure in building.py
+-    ecmaVersion: 2020,
++    ecmaVersion: 'latest',
+     preserveParens: closureFriendly,
+     onComment: closureFriendly ? sourceComments : undefined,
+     sourceType: exportES6 ? 'module' : 'script',
+--- a/tools/building.py
++++ b/tools/building.py
+@@ -847,7 +847,7 @@
+ 
+   args = ['--compilation_level', 'ADVANCED_OPTIMIZATIONS' if advanced else 'SIMPLE_OPTIMIZATIONS']
+   # Keep in sync with ecmaVersion in tools/acorn-optimizer.js
+-  args += ['--language_in', 'ECMASCRIPT_2020']
++  args += ['--language_in', 'ECMASCRIPT_NEXT_IN']
+   # Tell closure not to do any transpiling or inject any polyfills.
+   # At some point we may want to look into using this as way to convert to ES5 but
+   # babel is perhaps a better tool for that.

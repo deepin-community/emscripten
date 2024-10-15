@@ -1,0 +1,43 @@
+# License is in Reference field (see bug#786450)
+missing-license-paragraph-in-dep5-copyright apache-2\.0 *
+missing-license-paragraph-in-dep5-copyright gpl-1\+ *
+missing-license-paragraph-in-dep5-copyright gpl-2 *
+missing-license-paragraph-in-dep5-copyright gpl-2\+ *
+missing-license-paragraph-in-dep5-copyright gpl-3\+ *
+missing-license-paragraph-in-dep5-copyright lgpl-2 *
+missing-license-paragraph-in-dep5-copyright lgpl-2\+ *
+missing-license-paragraph-in-dep5-copyright lgpl-2\.1 *
+missing-license-paragraph-in-dep5-copyright lgpl-2\.1\+ *
+missing-license-paragraph-in-dep5-copyright lgpl-3 *
+missing-license-paragraph-in-dep5-copyright mpl-2\.0 *
+missing-license-text-in-dep5-copyright Apache-2\.0 *
+missing-license-text-in-dep5-copyright GPL-1\+ *
+missing-license-text-in-dep5-copyright GPL-2 *
+missing-license-text-in-dep5-copyright GPL-2\+ *
+missing-license-text-in-dep5-copyright GPL-3\+ *
+missing-license-text-in-dep5-copyright LGPL-2 *
+missing-license-text-in-dep5-copyright LGPL-2\+ *
+missing-license-text-in-dep5-copyright LGPL-2\.1 *
+missing-license-text-in-dep5-copyright LGPL-2\.1\+ *
+missing-license-text-in-dep5-copyright LGPL-3 *
+missing-license-text-in-dep5-copyright MPL-2\.0 *
+
+# False positive, just unusually long code lines in source
+source-is-missing src/cpuprofiler.js
+source-is-missing src/jsifier.js
+source-is-missing src/library.js
+source-is-missing src/library_exceptions_stub.js
+source-is-missing src/library_webgl.js
+source-is-missing src/memoryprofiler.js
+source-is-missing third_party/socket.io.js
+
+# False positive, fork where concatenated file is preferred form for modification
+source-is-missing third_party/terser/terser.js
+
+# Source is file <tests/hello_world.c>;
+# see function test_emsize() in file <tests/test_other.py>
+# and <https://github.com/emscripten-core/emscripten/pull/9663>
+source-is-missing tests/other/test_emsize.js
+
+# False positive, left-truncation listed last (see bug#970274, #970711)
+globbing-patterns-out-of-order *

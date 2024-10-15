@@ -1,0 +1,24 @@
+Description: Make the build reproducible
+Author: Chris Lamb <lamby@debian.org>
+Bug: https://github.com/emscripten-core/emscripten/pull/12679
+Last-Update: 2020-11-02
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tools/create_dom_pk_codes.py
++++ b/tools/create_dom_pk_codes.py
+@@ -32,6 +32,7 @@
+ 
+ import sys
+ import random
++import os
+ 
+ input_strings = [
+   (0x0, 'Unidentified',          'DOM_PK_UNKNOWN'),
+@@ -243,6 +244,7 @@
+ # Try hash function format h_i = ((h_(i-1) ^ k_1) << k_2) ^ s_i, where h_i is the hash function
+ # value at step i, k_1 and k_2 are the constants we are searching, and s_i is the i'th input
+ # character
++random.seed(os.environ.get('SOURCE_DATE_EPOCH'))
+ perfect_hash_table = None
+ 
+ # Last used perfect hash constants.  Stored here so that this script will

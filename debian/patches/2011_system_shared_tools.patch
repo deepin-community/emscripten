@@ -1,0 +1,35 @@
+Description: detect and use system shared helper tools by default
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2022-02-11
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tools/config_template.py
++++ b/tools/config_template.py
+@@ -17,7 +17,7 @@
+ EMSCRIPTEN_ROOT = '{{{ EMSCRIPTEN_ROOT }}}' # directory
+ 
+ LLVM_ROOT = '{{{ LLVM_ROOT }}}' # directory
+-BINARYEN_ROOT = '' # directory
++BINARYEN_ROOT = '{{{ BINARYEN_ROOT }}}' # directory
+ 
+ # Location of the node binary to use for running the JS parts of the compiler.
+ # This engine must exist, or nothing can be compiled.
+@@ -53,5 +53,6 @@
+ #
+ # FROZEN_CACHE = True # never clears the cache, and disallows building to the cache
+ 
++CLOSURE_COMPILER = 'closure-compiler'
+ LLVM_ADD_VERSION = '15'
+ CLANG_ADD_VERSION = '15'
+--- a/tools/config.py
++++ b/tools/config.py
+@@ -182,6 +182,9 @@
+   llvm_root = os.path.dirname(which('llvm-dis') or '/usr/bin/llvm-dis')
+   config_data = config_data.replace('\'{{{ LLVM_ROOT }}}\'', repr(llvm_root))
+ 
++  binaryen_root = os.path.dirname(os.path.dirname(which('binaryen') or '/usr/bin/binaryen'))
++  config_data = config_data.replace('\'{{{ BINARYEN_ROOT }}}\'', repr(binaryen_root))
++
+   node = which('node') or which('nodejs') or 'node'
+   config_data = config_data.replace('\'{{{ NODE }}}\'', repr(node))
+ 

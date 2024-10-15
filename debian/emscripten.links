@@ -1,0 +1,17 @@
+/usr/share/emscripten/wrapper /usr/bin/em++
+/usr/share/emscripten/wrapper /usr/bin/em-config
+/usr/share/emscripten/wrapper /usr/bin/emar
+/usr/share/emscripten/wrapper /usr/bin/embuilder
+/usr/share/emscripten/wrapper /usr/bin/emcc
+/usr/share/emscripten/wrapper /usr/bin/emcmake
+/usr/share/emscripten/wrapper /usr/bin/emconfigure
+/usr/share/emscripten/wrapper /usr/bin/emmake
+/usr/share/emscripten/wrapper /usr/bin/emprofile
+/usr/share/emscripten/wrapper /usr/bin/emranlib
+/usr/share/emscripten/wrapper /usr/bin/emrun
+/usr/share/emscripten/wrapper /usr/bin/emscons
+/usr/share/emscripten/wrapper /usr/bin/emsize
+/usr/share/emscripten/wrapper-tools /usr/bin/emdump
+/usr/share/emscripten/wrapper-tools /usr/bin/emdwp
+/usr/share/emscripten/wrapper-tools /usr/bin/emnm
+/usr/share/emscripten/wrapper-tools /usr/bin/emprofile

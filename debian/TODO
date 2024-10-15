@@ -1,0 +1,9 @@
+  * depend on packages when in Debian:
+    + node-es-check
+    + node-html-minifier
+  * check more tests when when related package are in Debian:
+    + node-wasm2c
+  * depend on packages when modernized in Debian:
+    + closure-compiler (bug#916145)
+  * compile and ship upstream paper docs/paper.tex
+  * compile and ship upstream documentation website

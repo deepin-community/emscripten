@@ -1,0 +1,29 @@
+From: Hyeon Kim <simnalamburt@gmail.com>
+Date: Sun, 8 May 2022 23:59:35 +0900
+Subject: preamble.js: Don't use fetch() in Node.js environment
+
+Fixes #16913
+---
+ src/preamble.js | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/src/preamble.js b/src/preamble.js
+index 430ac55..f021e0e 100644
+--- a/src/preamble.js
++++ b/src/preamble.js
+@@ -1179,6 +1179,15 @@ function createWasm() {
+ #if ENVIRONMENT_MAY_BE_WEBVIEW
+         // Don't use streaming for file:// delivered objects in a webview, fetch them synchronously.
+         !isFileURI(wasmBinaryFile) &&
++#endif
++#if ENVIRONMENT_MAY_BE_NODE
++        // Avoid instantiateStreaming() on Node.js environment for now, as while
++        // Node.js v18.1.0 implements it, it does not have a full fetch()
++        // implementation yet.
++        //
++        // Reference:
++        //   https://github.com/emscripten-core/emscripten/pull/16917
++        !ENVIRONMENT_IS_NODE &&
+ #endif
+         typeof fetch == 'function') {
+       return fetch(wasmBinaryFile, {{{ makeModuleReceiveExpr('fetchSettings', "{ credentials: 'same-origin' }") }}}).then(function(response) {

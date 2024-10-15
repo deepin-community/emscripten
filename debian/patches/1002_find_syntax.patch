@@ -1,0 +1,31 @@
+Description: avoid obsolete GNU-specific find syntax
+ The syntax "find -perm +222" was a GNU extension
+ which was dropped since findutils 4.5.11.
+Author: Jonas Smedegaard <dr@jones.dk>
+Bug: https://github.com/emscripten-core/emscripten/issues/12802
+Bug-Debian: https://bugs.debian.org/803028
+Last-Update: 2020-10-13
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tests/third_party/freealut/Makefile.am
++++ b/tests/third_party/freealut/Makefile.am
+@@ -33,7 +33,7 @@
+ 
+ # The Creative repository has some broken permissions, let's fix this.
+ permissions:
+-	find . -type f \! -perm +222 \! -name "*.sh" -exec chmod +w {} \;
++	find . -type f \! -perm /222 \! -name "*.sh" -exec chmod +w {} \;
+ 
+ # Automatically reformat all C headers and sources with indent according to
+ # admin/autotools/.indent.pro, but be make-friendly and take some precautions to
+--- a/tests/third_party/freealut/Makefile.in
++++ b/tests/third_party/freealut/Makefile.in
+@@ -663,7 +663,7 @@
+ 
+ # The Creative repository has some broken permissions, let's fix this.
+ permissions:
+-	find . -type f \! -perm +222 \! -name "*.sh" -exec chmod +w {} \;
++	find . -type f \! -perm /222 \! -name "*.sh" -exec chmod +w {} \;
+ 
+ # Automatically reformat all C headers and sources with indent according to
+ # admin/autotools/.indent.pro, but be make-friendly and take some precautions to

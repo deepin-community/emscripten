@@ -1,0 +1,65 @@
+Emscripten for Debian
+=====================
+
+
+Tools installed to $PATH
+------------------------
+
+Emscripten upstream expects all its tools to be executed
+from same common project directory.
+
+Debian packaging of Emscripten instead provide tools
+installed to $PATH.
+
+
+LLVM
+----
+
+Emscripten use external tool collection "LLVM" as compiler backend.
+
+Unfortunately, Emscripten uses unreleased snapshot of LLVM
+where Debian provide only official releases of LLVM.
+
+Debian packaging of Emscripten has been superficially patched
+to use latest released and Debian-packaged LLVM.
+
+Using features requiring newer LLVM may lead to errors like this:
+
+  * Function addresses with offsets not supported
+  * TLS symbol is undefined, but TLS symbols cannot yet be imported
+  * unknown argument: '-mrelaxed-simd'
+
+
+Wasm SjLj support
+-----------------
+
+Emscripten supports SjLj handling using Wasm EH instructions.
+Unfortunately this requires a newer LLVM than available in Debian
+(see above)
+and has been removed from the Debian packaging of Emscripten.
+
+
+Closure compiler
+----------------
+
+Emscripten use external tool "closure compiler" to optimize for size.
+
+Unfortunately, Debian-packaged closure compiler is too old
+(see <https://bugs.debian.org/916145>).
+
+Using too old closure compiler may lead to errors like this:
+
+  * ERROR: "--language_out" is not a valid option
+
+Avoid closure compiler either by compiling without optimization
+and without enabling support for older browsers
+(i.e. avoid options like -sMIN_CHROME_VERSION=10),
+or (possibly, not well tested) by passing option "--closure=0".
+You may then want to transpile and optimize resulting code afterwards
+using external tools like babel and uglifyjs -
+see <https://wiki.debian.org/Javascript/Nodejs/#ES6_and_transpiling>
+and <https://wiki.debian.org/Javascript/Minification>
+for more details.
+
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 15 Feb 2022 23:23:13 +0100

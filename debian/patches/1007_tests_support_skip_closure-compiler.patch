@@ -1,0 +1,475 @@
+--- a/tests/runner.py
++++ b/tests/runner.py
+@@ -344,6 +344,7 @@
+   common.EMTEST_SAVE_DIR = int(os.getenv('EMTEST_SAVE_DIR', '0'))
+   common.EMTEST_ALL_ENGINES = int(os.getenv('EMTEST_ALL_ENGINES', '0'))
+   common.EMTEST_SKIP_SLOW = int(os.getenv('EMTEST_SKIP_SLOW', '0'))
++  common.EMTEST_LACKS_CLOSURE_COMPILER = int(os.getenv('EMTEST_LACKS_CLOSURE_COMPILER', '0'))
+   common.EMTEST_LACKS_NATIVE_CLANG = int(os.getenv('EMTEST_LACKS_NATIVE_CLANG', '0'))
+   common.EMTEST_REBASELINE = int(os.getenv('EMTEST_REBASELINE', '0'))
+   common.EMTEST_VERBOSE = int(os.getenv('EMTEST_VERBOSE', '0')) or shared.DEBUG
+--- a/tests/test_other.py
++++ b/tests/test_other.py
+@@ -32,8 +32,8 @@
+ from tools.shared import EMCC, EMXX, EMAR, EMRANLIB, PYTHON, FILE_PACKAGER, WINDOWS, EM_BUILD_VERBOSE
+ from tools.shared import CLANG_CC, CLANG_CXX, LLVM_AR, LLVM_DWARFDUMP, LLVM_DWP, EMCMAKE, EMCONFIGURE
+ from common import RunnerCore, path_from_root, is_slow_test, ensure_dir, disabled, make_executable
+-from common import env_modify, no_mac, no_windows, requires_native_clang, with_env_modify
+-from common import create_file, parameterized, NON_ZERO, node_pthreads, TEST_ROOT, test_file
++from common import env_modify, no_mac, no_windows, requires_closure_compiler, requires_native_clang, with_env_modify
++from common import create_file, parameterized, NON_ZERO, EMTEST_LACKS_CLOSURE_COMPILER, node_pthreads, TEST_ROOT, test_file
+ from common import compiler_for, read_file, read_binary, EMBUILDER, require_v8, require_node
+ from tools import shared, building, utils, deps_info, response_file
+ import common
+@@ -224,6 +224,7 @@
+     self.assertNotContained("new URL('data:", src)
+     self.assertContained("new Worker(new URL('hello_world.worker.js', import.meta.url))", src)
+ 
++  @requires_closure_compiler
+   def test_emcc_output_mjs_closure(self):
+     self.run_process([EMCC, '-o', 'hello_world.mjs',
+                       test_file('hello_world.c'), '--closure=1'])
+@@ -1223,7 +1224,7 @@
+     create_file('in.txt', 'abcdef\nghijkl')
+     run_test()
+     self.emcc(test_file('module/test_stdin.c'),
+-              ['-O2', '--closure=1'], output_filename='out.js')
++              ['-O2', '--closure=0' if EMTEST_LACKS_CLOSURE_COMPILER else '--closure=1'], output_filename='out.js')
+     run_test()
+ 
+   def test_ungetc_fscanf(self):
+@@ -2073,6 +2074,7 @@
+     self.run_process([EMXX, 'main.cpp', '--pre-js', 'pre.js', '--pre-js', 'pre2.js'])
+     self.assertContained('prepre\npre-run\nhello from main\n', self.run_js('a.out.js'))
+ 
++  @requires_closure_compiler
+   def test_extern_prepost(self):
+     create_file('extern-pre.js', '// I am an external pre.\n')
+     create_file('extern-post.js', '// I am an external post.\n')
+@@ -2358,6 +2360,7 @@
+     self.run_process([EMXX, 'main.cpp', '-lembind', '-sASYNCIFY', '--post-js', 'post.js'])
+     self.assertContained('done', self.run_js('a.out.js'))
+ 
++  @requires_closure_compiler
+   def test_embind_closure_no_dynamic_execution(self):
+     create_file('post.js', '''
+       Module['onRuntimeInitialized'] = function() {
+@@ -2400,7 +2403,8 @@
+     test_cases += test_cases_without_utf8
+     test_cases.extend([(args[:] + ['-sDYNAMIC_EXECUTION=0']) for args in test_cases])
+     # closure compiler doesn't work with DYNAMIC_EXECUTION=0
+-    test_cases.append((['-lembind', '-O2', '--closure=1']))
++    if not EMTEST_LACKS_CLOSURE_COMPILER:
++      test_cases.append((['-lembind', '-O2', '--closure=1']))
+     for args in test_cases:
+       print(args)
+       self.clear()
+@@ -2772,6 +2776,7 @@
+     self.assertLess(output.count('Cannot enlarge memory arrays'),  6)
+ 
+   @require_node
++  @requires_closure_compiler
+   def test_module_exports_with_closure(self):
+     # This test checks that module.export is retained when JavaScript
+     # is minified by compiling with --closure 1
+@@ -2780,7 +2785,7 @@
+ 
+     # compile with -O2 --closure 0
+     self.run_process([EMCC, test_file('Module-exports/test.c'),
+-                      '-o', 'test.js', '-O2', '--closure', '0',
++                      '-o', 'test.js', '-O2', '--closure=0',
+                       '--pre-js', test_file('Module-exports/setup.js'),
+                       '-sEXPORTED_FUNCTIONS=_bufferTest,_malloc,_free',
+                       '-sEXPORTED_RUNTIME_METHODS=ccall,cwrap',
+@@ -3441,6 +3446,7 @@
+     output = self.run_js('a.out.js')
+     self.assertContained('|5|', output)
+ 
++  @requires_closure_compiler
+   def test_LEGACY_VM_SUPPORT(self):
+     # when modern features are lacking, we can polyfill them or at least warn
+     create_file('pre.js', 'Math.imul = undefined;')
+@@ -5172,10 +5178,11 @@
+     test(['-sASSERTIONS=0'], 120000) # we don't care about code size with assertions
+     test(['-O1'], 91000)
+     test(['-O2'], 46000)
+-    test(['-O3', '--closure=1'], 17000)
+-    # js too
+-    test(['-O3', '--closure=1', '-sWASM=0'], 36000)
+-    test(['-O3', '--closure', '2', '-sWASM=0'], 33000) # might change now and then
++    if not EMTEST_LACKS_CLOSURE_COMPILER:
++      test(['-O3', '--closure=1'], 17000)
++      # js too
++      test(['-O3', '--closure=1', '-sWASM=0'], 36000)
++      test(['-O3', '--closure', '2', '-sWASM=0'], 33000) # might change now and then
+ 
+   def test_no_browser(self):
+     BROWSER_INIT = 'var Browser'
+@@ -6545,7 +6552,7 @@
+                       '--post-js', test_file('return64bit/testbindend.js'),
+                       '-sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE=$dynCall',
+                       '-sEXPORTED_FUNCTIONS=_test_return64', '-o', 'test.js', '-O2',
+-                      '--closure=1', '-g1', '-sWASM_ASYNC_COMPILATION=0'] + args)
++                      '--closure=0' if EMTEST_LACKS_CLOSURE_COMPILER else '--closure=1', '-g1', '-sWASM_ASYNC_COMPILATION=0'] + args)
+ 
+     # Simple test program to load the test.js binding library and call the binding to the
+     # C function returning the 64 bit long.
+@@ -7104,7 +7111,7 @@
+ 
+   # test debug info and debuggability of JS output
+   def test_binaryen_debug(self):
+-    for args, expect_dash_g, expect_emit_text, expect_clean_js, expect_whitespace_js, expect_closured in [
++    test_cases = [
+         (['-O0'], False, False, False, True, False),
+         (['-O0', '-g1'], False, False, False, True, False),
+         (['-O0', '-g2'], True, False, False, True, False), # in -g2+, we emit -g to asm2wasm so function names are saved
+@@ -7114,9 +7121,11 @@
+         (['-O2'],        False, False, True,  False, False),
+         (['-O2', '-g1'], False, False, True,  True, False),
+         (['-O2', '-g'],  True,  True,  False, True, False),
+-        (['-O2', '--closure=1'],         False, False, True, False, True),
+-        (['-O2', '--closure=1', '-g1'],  False, False, True, True,  True),
+-      ]:
++      ]
++    if not EMTEST_LACKS_CLOSURE_COMPILER:
++      test_cases.append((['-O2', '--closure=1'],         False, False, True, False, True))
++      test_cases.append((['-O2', '--closure=1', '-g1'],  False, False, True, True,  True))
++    for args, expect_dash_g, expect_emit_text, expect_clean_js, expect_whitespace_js, expect_closured in test_cases:
+       print(args, expect_dash_g, expect_emit_text)
+       try_delete('a.out.wat')
+       cmd = [EMXX, test_file('hello_world.cpp')] + args
+@@ -7744,6 +7753,7 @@
+           for std in [[], ['-std=c89']]:
+             self.run_process([EMCC] + std + ['-Werror', '-Wall', '-pedantic', 'a.c', 'b.c'])
+ 
++  @requires_closure_compiler
+   @is_slow_test
+   def test_single_file(self):
+     for (single_file_enabled,
+@@ -7756,6 +7766,8 @@
+         continue
+       if closure_enabled and debug_enabled:
+         continue
++      if closure_enabled and not EMTEST_LACKS_CLOSURE_COMPILER:
++        continue
+ 
+       expect_wasm = wasm_enabled
+       expect_meminit = meminit1_enabled and not wasm_enabled
+@@ -7888,6 +7900,7 @@
+     assert_aliases_match('MAXIMUM_MEMORY', 'WASM_MEM_MAX', '16777216', ['-sALLOW_MEMORY_GROWTH'])
+     assert_aliases_match('MAXIMUM_MEMORY', 'BINARYEN_MEM_MAX', '16777216', ['-sALLOW_MEMORY_GROWTH'])
+ 
++  @requires_closure_compiler
+   def test_IGNORE_CLOSURE_COMPILER_ERRORS(self):
+     create_file('pre.js', r'''
+       // make closure compiler very very angry
+@@ -7937,6 +7950,7 @@
+   def test_full_js_library_minimal_runtime(self):
+     self.run_process([EMCC, test_file('hello_world.c'), '-sSTRICT_JS', '-sINCLUDE_FULL_LIBRARY', '-sMINIMAL_RUNTIME'])
+ 
++  @requires_closure_compiler
+   @parameterized({
+     '': [[]],
+     # bigint support is interesting to test here because it changes which
+@@ -7957,6 +7971,7 @@
+       '-sLEGACY_GL_EMULATION',
+     ] + args)
+ 
++  @requires_closure_compiler
+   def test_closure_webgpu(self):
+     # This test can be removed if USE_WEBGPU is later included in INCLUDE_FULL_LIBRARY.
+     self.build(test_file('hello_world.c'), emcc_args=[
+@@ -7967,6 +7982,7 @@
+     ])
+ 
+   # Tests --closure-args command line flag
++  @requires_closure_compiler
+   def test_closure_externs(self):
+     # Test with relocate path to the externs file to ensure that incoming relative paths
+     # are translated correctly (Since closure runs with a different CWD)
+@@ -7983,6 +7999,7 @@
+                        args)
+ 
+   # Tests that it is possible to enable the Closure compiler via --closure=1 even if any of the input files reside in a path with unicode characters.
++  @requires_closure_compiler
+   def test_closure_cmdline_utf8_chars(self):
+     test = "☃ äö Ć € ' 🦠.c"
+     shutil.copyfile(test_file('hello_world.c'), test)
+@@ -7990,6 +8007,7 @@
+     create_file(externs, '')
+     self.run_process([EMCC, test, '--closure=1', '--closure-args', '--externs "' + externs + '"'])
+ 
++  @requires_closure_compiler
+   def test_closure_type_annotations(self):
+     # Verify that certain type annotations exist to allow closure to avoid
+     # ambiguity and maximize optimization opportunities in user code.
+@@ -8229,11 +8247,12 @@
+     self.assertContained('GROWABLE_HEAP_I8().set([ 1, 2, 3 ], $0 >>> 0)',
+                          read_file('a.out.js'))
+ 
++  # FIXME: skip tests when closure is lacking instead of doing same tests twice
+   @parameterized({
+     '': ([],), # noqa
+     'O3': (['-O3'],), # noqa
+-    'closure': (['--closure=1'],), # noqa
+-    'closure_O3': (['--closure=1', '-O3'],), # noqa
++    'closure': (['--closure=0' if EMTEST_LACKS_CLOSURE_COMPILER else '--closure=1'],), # noqa
++    'closure_O3': (['--closure=0' if EMTEST_LACKS_CLOSURE_COMPILER else '--closure=1', '-O3'],), # noqa
+   })
+   def test_EM_ASM_ES6(self, args):
+     create_file('src.cpp', r'''
+@@ -9015,9 +9034,10 @@
+ 
+     self.run_process([PYTHON, test_file('gen_many_js_functions.py'), 'library_long.js', 'main_long.c'])
+     for wasm in [[], ['-sWASM=0']]:
+-      # Currently we rely on Closure for full minification of every appearance of JS function names.
+-      # TODO: Add minification also for non-Closure users and add [] to this list to test minification without Closure.
+-      for closure in [['--closure=1']]:
++      closure_cases = [[]]
++      if not EMTEST_LACKS_CLOSURE_COMPILER:
++        closure_cases.append(['--closure=1'])
++      for closure in closure_cases:
+         args = [EMCC, '-O3', '--js-library', 'library_long.js', 'main_long.c', '-o', 'a.html'] + wasm + closure
+         print(' '.join(args))
+         self.run_process(args)
+@@ -9047,15 +9067,16 @@
+       self.assertNotContained('invoke_ii', output)
+       self.assertNotContained('invoke_v', output)
+ 
++  # FIXME: skip tests when closure is lacking instead of doing same tests twice
+   @parameterized({
+     'O0': (False, ['-O0']), # noqa
+     'O0_emit': (True, ['-O0', '-sEMIT_EMSCRIPTEN_LICENSE']), # noqa
+     'O2': (False, ['-O2']), # noqa
+     'O2_emit': (True, ['-O2', '-sEMIT_EMSCRIPTEN_LICENSE']), # noqa
+     'O2_js_emit': (True, ['-O2', '-sEMIT_EMSCRIPTEN_LICENSE', '-sWASM=0']), # noqa
+-    'O2_closure': (False, ['-O2', '--closure=1']), # noqa
+-    'O2_closure_emit': (True, ['-O2', '-sEMIT_EMSCRIPTEN_LICENSE', '--closure=1']), # noqa
+-    'O2_closure_js_emit': (True, ['-O2', '-sEMIT_EMSCRIPTEN_LICENSE', '--closure=1', '-sWASM=0']), # noqa
++    'O2_closure': (False, ['-O2', '--closure=0' if EMTEST_LACKS_CLOSURE_COMPILER else '--closure=1']), # noqa
++    'O2_closure_emit': (True, ['-O2', '-sEMIT_EMSCRIPTEN_LICENSE', '--closure=0' if EMTEST_LACKS_CLOSURE_COMPILER else '--closure=1']), # noqa
++    'O2_closure_js_emit': (True, ['-O2', '-sEMIT_EMSCRIPTEN_LICENSE', '--closure=0' if EMTEST_LACKS_CLOSURE_COMPILER else '--closure=1', '-sWASM=0']), # noqa
+   })
+   def test_emscripten_license(self, expect_license, args):
+     # fastcomp does not support the new license flag
+@@ -9089,7 +9110,10 @@
+         num_times_export_is_referenced = output.count('thisIsAFunctionExportedFromAsmJsOrWasmWithVeryLongFunction')
+         self.assertEqual(num_times_export_is_referenced, 1)
+ 
+-    for closure in [[], ['--closure=1']]:
++    closure_cases = [[]]
++    if not EMTEST_LACKS_CLOSURE_COMPILER:
++      closure_cases.append(['--closure=1'])
++    for closure in closure_cases:
+       for opt in [['-O2'], ['-O3'], ['-Os']]:
+         test(['-sWASM=0'], closure, opt)
+         test(['-sWASM_ASYNC_COMPILATION=0'], closure, opt)
+@@ -9133,7 +9157,7 @@
+                                '-sNO_FILESYSTEM',
+                                '--output_eol', 'linux',
+                                '-Oz',
+-                               '--closure=1',
++                               '--closure=0' if EMTEST_LACKS_CLOSURE_COMPILER else '--closure=1',
+                                '-DNDEBUG',
+                                '-ffast-math']
+ 
+@@ -9674,6 +9698,7 @@
+     # otherwise in such a trivial program).
+     self.assertLess(no, 0.95 * yes)
+ 
++  @requires_closure_compiler
+   def test_INCOMING_MODULE_JS_API(self):
+     def test(args):
+       self.run_process([EMCC, test_file('hello_world.c'), '-O3', '--closure=1', '-sENVIRONMENT=node,shell'] + args)
+@@ -9810,6 +9835,7 @@
+       self.assertContainedIf('exception catching is disabled, this exception cannot be caught', result, expect_caught)
+     self.assertContainedIf('CAUGHT', result, expect_caught)
+ 
++  @requires_closure_compiler
+   def test_exceptions_with_closure_and_without_catching(self):
+     # using invokes will require setThrew(), and closure will error if it is not
+     # defined. this test checks that we define it even without catching any
+@@ -10074,11 +10100,14 @@
+ 
+   def test_warning_flags(self):
+     self.run_process([EMCC, '-c', '-o', 'hello.o', test_file('hello_world.c')])
+-    cmd = [EMCC, 'hello.o', '-o', 'a.js', '-g', '--closure=1']
++    cmd = [EMCC, 'hello.o', '-o', 'a.js', '-g']
++    if not EMTEST_LACKS_CLOSURE_COMPILER:
++      cmd.append(['--closure=1'])
+ 
+     # warning that is enabled by default
+-    stderr = self.run_process(cmd, stderr=PIPE).stderr
+-    self.assertContained('emcc: warning: disabling closure because debug info was requested [-Wemcc]', stderr)
++    if not EMTEST_LACKS_CLOSURE_COMPILER:
++      stderr = self.run_process(cmd, stderr=PIPE).stderr
++      self.assertContained('emcc: warning: disabling closure because debug info was requested [-Wemcc]', stderr)
+ 
+     # -w to suppress warnings
+     stderr = self.run_process(cmd + ['-w'], stderr=PIPE).stderr
+@@ -10089,12 +10118,14 @@
+     self.assertNotContained('warning', stderr)
+ 
+     # with -Werror should fail
+-    stderr = self.expect_fail(cmd + ['-Werror'])
+-    self.assertContained('error: disabling closure because debug info was requested [-Wemcc] [-Werror]', stderr)
++    if not EMTEST_LACKS_CLOSURE_COMPILER:
++      stderr = self.expect_fail(cmd + ['-Werror'])
++      self.assertContained('error: disabling closure because debug info was requested [-Wemcc] [-Werror]', stderr)
+ 
+     # with -Werror + -Wno-error=<type> should only warn
+-    stderr = self.run_process(cmd + ['-Werror', '-Wno-error=emcc'], stderr=PIPE).stderr
+-    self.assertContained('emcc: warning: disabling closure because debug info was requested [-Wemcc]', stderr)
++    if not EMTEST_LACKS_CLOSURE_COMPILER:
++      stderr = self.run_process(cmd + ['-Werror', '-Wno-error=emcc'], stderr=PIPE).stderr
++      self.assertContained('emcc: warning: disabling closure because debug info was requested [-Wemcc]', stderr)
+ 
+     # check that `-Werror=foo` also enales foo
+     stderr = self.expect_fail(cmd + ['-Werror=legacy-settings', '-sTOTAL_MEMORY'])
+@@ -10284,6 +10315,7 @@
+     output = self.run_process([os.path.abspath('program.exe')], stdout=PIPE).stdout
+     self.assertEqual(output, read_file(test_file('other/wasm2c/output-multi.txt')))
+ 
++  @requires_closure_compiler
+   @parameterized({
+     'wasm2js': (['-sWASM=0'], ''),
+     'modularize': (['-sMODULARIZE'], 'Module()'),
+@@ -10310,7 +10342,7 @@
+     test(['-sLEGACY_VM_SUPPORT', '-sNO_POLYFILL'], expect_fail=True)
+ 
+   def test_webgpu_compiletest(self):
+-    for args in [[], ['-sASSERTIONS'], ['-sASSERTIONS', '--closure=1'], ['-sMAIN_MODULE=1']]:
++    for args in [[], ['-sASSERTIONS'], ['-sASSERTIONS', '--closure=0' if EMTEST_LACKS_CLOSURE_COMPILER else '--closure=1'], ['-sMAIN_MODULE=1']]:
+       self.run_process([EMXX, test_file('webgpu_jsvalstore.cpp'), '-sUSE_WEBGPU', '-sASYNCIFY'] + args)
+ 
+   def test_signature_mismatch(self):
+@@ -10337,6 +10369,7 @@
+     self.run_process([EMCC, '-sLLD_REPORT_UNDEFINED', '-sMAIN_MODULE=2', test_file('hello_world.c')])
+ 
+   # Verifies that warning messages that Closure outputs are recorded to console
++  @requires_closure_compiler
+   def test_closure_warnings(self):
+     proc = self.run_process([EMCC, test_file('test_closure_warning.c'), '-O3', '--closure=1', '-sCLOSURE_WARNINGS=quiet'], stderr=PIPE)
+     self.assertNotContained('WARNING', proc.stderr)
+@@ -10809,6 +10842,7 @@
+     self.assertContained('hello, world!', self.run_js('a.out.js'))
+ 
+   # Test that Closure prints out clear readable error messages when there are errors.
++  @requires_closure_compiler
+   def test_closure_errors(self):
+     err = self.expect_fail([EMCC, test_file('closure_error.c'), '-O2', '--closure=1'])
+     lines = err.split('\n')
+@@ -10827,16 +10861,19 @@
+     self.assertNotEqual(idx1, idx2)
+ 
+   # Make sure that --cpuprofiler compiles with --closure 1
++  @requires_closure_compiler
+   def test_cpuprofiler_closure(self):
+     # TODO: Enable '-sCLOSURE_WARNINGS=error' in the following, but that has currently regressed.
+     self.run_process([EMCC, test_file('hello_world.c'), '-O2', '--closure=1', '--cpuprofiler'])
+ 
+   # Make sure that --memoryprofiler compiles with --closure 1
++  @requires_closure_compiler
+   def test_memoryprofiler_closure(self):
+     # TODO: Enable '-sCLOSURE_WARNINGS=error' in the following, but that has currently regressed.
+     self.run_process([EMCC, test_file('hello_world.c'), '-O2', '--closure=1', '--memoryprofiler'])
+ 
+   # Make sure that --threadprofiler compiles with --closure 1
++  @requires_closure_compiler
+   def test_threadprofiler_closure(self):
+     # TODO: Enable '-sCLOSURE_WARNINGS=error' in the following, but that has currently regressed.
+     self.run_process([EMCC, test_file('hello_world.c'), '-O2', '-sUSE_PTHREADS', '--closure=1', '--threadprofiler', '-sASSERTIONS'])
+@@ -11382,6 +11419,7 @@
+     err = self.run_js('test_pthread_js_exception.js', assert_returncode=NON_ZERO)
+     self.assertContained('missing is not defined', err)
+ 
++  @requires_closure_compiler
+   def test_config_closure_compiler(self):
+     self.run_process([EMCC, test_file('hello_world.c'), '--closure=1'])
+     with env_modify({'EM_CLOSURE_COMPILER': sys.executable}):
+@@ -11592,6 +11630,7 @@
+     # as `examples/`?)
+     self.run_process([EMCC, test_file('hello_function.cpp'), '-o', 'function.html', '-sEXPORTED_FUNCTIONS=_int_sqrt', '-sEXPORTED_RUNTIME_METHODS=ccall,cwrap'])
+ 
++  @requires_closure_compiler
+   @parameterized({
+     '': ([],),
+     'O2': (['-O2'],),
+--- a/tests/test_core.py
++++ b/tests/test_core.py
+@@ -23,11 +23,11 @@
+ from tools.shared import PYTHON, EMCC, EMAR
+ from tools.utils import WINDOWS, MACOS
+ from tools import shared, building, config, webassembly
+-from common import RunnerCore, path_from_root, requires_native_clang, test_file, create_file
++from common import RunnerCore, path_from_root, requires_closure_compiler, requires_native_clang, test_file, create_file
+ from common import skip_if, needs_dylink, no_windows, no_mac, is_slow_test, parameterized
+ from common import env_modify, with_env_modify, disabled, node_pthreads
+ from common import read_file, read_binary, require_v8
+-from common import NON_ZERO, WEBIDL_BINDER, EMBUILDER
++from common import NON_ZERO, EMTEST_LACKS_CLOSURE_COMPILER, WEBIDL_BINDER, EMBUILDER
+ import clang_native
+ 
+ # decorators for limiting which modes a test can run in
+@@ -361,7 +361,7 @@
+ 
+   # Use closure in some tests for some additional coverage
+   def maybe_closure(self):
+-    if '--closure=1' not in self.emcc_args and self.should_use_closure():
++    if '--closure=1' not in self.emcc_args and self.should_use_closure() and not EMTEST_LACKS_CLOSURE_COMPILER:
+       self.emcc_args += ['--closure=1']
+       logger.debug('using closure compiler..')
+       return True
+@@ -5119,7 +5119,7 @@
+     self.banned_js_engines = [config.SPIDERMONKEY_ENGINE] # closure can generate variables called 'gc', which pick up js shell stuff
+     if self.maybe_closure(): # Use closure here, to test we don't break FS stuff
+       self.emcc_args = [x for x in self.emcc_args if x != '-g'] # ensure we test --closure 1 --memory-init-file 1 (-g would disable closure)
+-    elif '-O3' in self.emcc_args and not self.is_wasm():
++    elif '-O3' in self.emcc_args and not self.is_wasm() and not EMTEST_LACKS_CLOSURE_COMPILER:
+       print('closure 2')
+       self.emcc_args += ['--closure', '2'] # Use closure 2 here for some additional coverage
+       return self.skipTest('TODO: currently skipped because CI runs out of memory running Closure in this test!')
+@@ -7502,6 +7502,7 @@
+       self.assertLessEqual(start_wat_addr, dwarf_addr)
+       self.assertLessEqual(dwarf_addr, end_wat_addr)
+ 
++  @requires_closure_compiler
+   def test_modularize_closure_pre(self):
+     # test that the combination of modularize + closure + pre-js works. in that mode,
+     # closure should not minify the Module object in a way that the pre-js cannot use it.
+@@ -8502,6 +8503,7 @@
+   @no_safe_heap('asan does not work with SAFE_HEAP')
+   @no_wasm2js('TODO: ASAN in wasm2js')
+   @no_memory64('TODO: ASAN in memory64')
++  @requires_closure_compiler
+   def test_asan_modularized_with_closure(self):
+     # the bug is that createModule() returns undefined, instead of the
+     # proper Promise object.
+--- a/tests/common.py
++++ b/tests/common.py
+@@ -55,6 +55,7 @@
+ # to force testing on all js engines, good to find js engine bugs
+ EMTEST_ALL_ENGINES = None
+ EMTEST_SKIP_SLOW = None
++EMTEST_LACKS_CLOSURE_COMPILER = None
+ EMTEST_LACKS_NATIVE_CLANG = None
+ EMTEST_VERBOSE = None
+ EMTEST_REBASELINE = None
+@@ -156,6 +157,17 @@
+   return lambda f: f
+ 
+ 
++def requires_closure_compiler(func):
++  assert callable(func)
++
++  def decorated(self, *args, **kwargs):
++    if EMTEST_LACKS_CLOSURE_COMPILER:
++      return self.skipTest('closure compiler tests are disabled')
++    return func(self, *args, **kwargs)
++
++  return decorated
++
++
+ def requires_native_clang(func):
+   assert callable(func)
+ 

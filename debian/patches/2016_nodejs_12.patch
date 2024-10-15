@@ -1,0 +1,20 @@
+Description: support NodeJS v12.x
+ NodeJS option --unhandled-rejections was introduced in v12.0.0
+ but option value "throw" was introduced later.
+ .
+ See <https://nodejs.org/docs/latest-v12.x/api/cli.html#cli_unhandled_rejections_mode>
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2021-11-22
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tests/common.py
++++ b/tests/common.py
+@@ -426,7 +426,7 @@
+       '--stack-trace-limit=50',
+       # Opt in to node v15 default behaviour:
+       # https://nodejs.org/api/cli.html#cli_unhandled_rejections_mode
+-      '--unhandled-rejections=throw',
++      '--unhandled-rejections=strict',
+       # Include backtrace for all uncuaght exceptions (not just Error).
+       '--trace-uncaught',
+     ]

@@ -1,0 +1,9 @@
+Test-Command:
+ emcc /usr/share/emscripten/tests/hello_world.c &&
+ eslint --no-eslintrc --quiet --env browser --parser-options=ecmaVersion:6 --format unix a.out.js &&
+ emcc -O3 /usr/share/emscripten/tests/hello_world.c &&
+ eslint --no-eslintrc --quiet --env browser --parser-options=ecmaVersion:6 --format unix a.out.js
+Restrictions: allow-stderr
+Depends:
+ emscripten,
+ eslint,
