@@ -1,0 +1,6 @@
+debian/.emscripten
+debian/doc/
+debian/*.1
+emscripten-revision.txt
+system/include/emscripten/dom_pk_codes.h
+system/lib/html5/dom_pk_codes.c

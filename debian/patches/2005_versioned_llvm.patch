@@ -1,0 +1,14 @@
+Description: use versioned LLVM
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2024-03-16
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tools/config_template.py
++++ b/tools/config_template.py
+@@ -52,3 +52,6 @@
+ # Other options
+ #
+ # FROZEN_CACHE = True # never clears the cache, and disallows building to the cache
++
++LLVM_ADD_VERSION = '15'
++CLANG_ADD_VERSION = '15'

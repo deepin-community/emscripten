@@ -1,0 +1,29 @@
+Description: use eslint instead of es-check missing in Debian
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2020-10-13
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tests/common.py
++++ b/tests/common.py
+@@ -563,7 +563,7 @@
+     return args
+ 
+   def verify_es5(self, filename):
+-    es_check = shared.get_npm_cmd('es-check')
++    eslint = ['eslint', '--no-eslintrc', '--quiet', '--env', 'browser', '--format', 'unix']
+     # use --quiet once its available
+     # See: https://github.com/dollarshaveclub/es-check/pull/126/
+     es_check_env = os.environ.copy()
+@@ -574,10 +574,10 @@
+       #  ES-Check: there were no ES version matching errors!
+       # pipe stdout and stderr so that we can choose if/when to print this
+       # output and avoid spamming stdout when tests are successful.
+-      shared.run_process(es_check + ['es5', os.path.abspath(filename)], stdout=PIPE, stderr=STDOUT, env=es_check_env)
++      shared.run_process(eslint + [os.path.abspath(filename)], stdout=PIPE, stderr=STDOUT, env=es_check_env)
+     except subprocess.CalledProcessError as e:
+       print(e.stdout)
+-      self.fail('es-check failed to verify ES5 output compliance')
++      self.fail('eslint failed to verify ES5 output compliance')
+ 
+   # Build JavaScript code from source code
+   def build(self, filename, libraries=[], includes=[], force_c=False, js_outfile=True, emcc_args=[], output_basename=None):

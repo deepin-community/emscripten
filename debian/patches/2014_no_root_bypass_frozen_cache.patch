@@ -1,0 +1,16 @@
+Description: avoid root bypass of frozen cache
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2022-02-16
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tools/config.py
++++ b/tools/config.py
+@@ -78,7 +78,7 @@
+   WASM_ENGINES = [listify(engine) for engine in WASM_ENGINES]
+   CLOSURE_COMPILER = listify(CLOSURE_COMPILER)
+   if not CACHE:
+-    if FROZEN_CACHE or root_is_writable():
++    if FROZEN_CACHE:
+       CACHE = path_from_root('cache')
+     else:
+       # Use the legacy method of putting the cache in the user's home directory

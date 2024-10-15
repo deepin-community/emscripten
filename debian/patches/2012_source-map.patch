@@ -1,0 +1,53 @@
+Description: use older NodeJS module source-map
+ Debian package node-source-map is too old
+ (see bug#1004658).
+ .
+ This patch essentially reverts upstream git commit 21df9ee.
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2022-01-31
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/package.json
++++ b/package.json
+@@ -4,7 +4,7 @@
+     "es-check": "^6.1.1",
+     "eslint": "^8.6.0",
+     "eslint-config-google": "^0.14.0",
+-    "source-map": "0.7.3",
++    "source-map": "0.5.7",
+     "ws": "~0.4.28"
+   },
+   "dependencies": {
+--- a/tests/sourcemap2json.js
++++ b/tests/sourcemap2json.js
+@@ -12,12 +12,11 @@
+ var SourceMapConsumer = require('source-map').SourceMapConsumer;
+ var fs = require('fs');
+ 
+-new SourceMapConsumer(fs.readFileSync(process.argv[2], 'utf-8')).then((consumer) => {
+-  var mappings = [];
++var consumer = new SourceMapConsumer(fs.readFileSync(process.argv[2], 'utf-8'));
++var mappings = [];
+ 
+-  consumer.eachMapping(function(mapping) {
+-    mappings.push(mapping);
+-  });
+-
+-  console.log(JSON.stringify(mappings, null, 2));
++consumer.eachMapping(function(mapping) {
++  mappings.push(mapping);
+ });
++
++console.log(JSON.stringify(mappings));
+--- a/tests/test_core.py
++++ b/tests/test_core.py
+@@ -7327,7 +7327,8 @@
+ 
+     self.emcc(os.path.abspath('src.cpp'),
+               self.get_emcc_args(),
+-              out_filename)
++              out_filename,
++              stderr=PIPE)
+     map_referent = out_filename if not self.is_wasm() else wasm_filename
+     # after removing the @line and @sourceMappingURL comments, the build
+     # result should be identical to the non-source-mapped debug version.

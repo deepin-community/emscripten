@@ -1,0 +1,267 @@
+#!/bin/sh
+# Copyright 2020-2021  Jonas Smedegaard <dr@jones.dk>
+# Copyright 2020-2021  Purism, SPC
+# Description: helper script to update copyright_hints
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Depends:
+#  licensecheck,
+#  libimage-exiftool-perl,
+#  libipc-system-simple-perl,
+#  libregexp-assemble-perl,
+#  perl,
+
+set -eu
+
+# FIXME: closely examine sections musl
+# FIXME: avoid double-detecting X11~ as also FSFULLR~Sun
+
+# resolve file regex from contained license or shebang, or path regex
+_file_regex() {
+	perl -MGetopt::Long=:config,gnu_getopt -MPath::Tiny -MRegexp::Assemble -MList::Util=any \
+		-e 'GetOptions ( \%opt, "shortname=s@", "grantglob=s@", "regex=s@", "shebang=s@", "nonverb=s@" );'\
+		-e '@section = split /\n\n+/, path("debian/copyright")->slurp_utf8;'\
+		-e 'for $name ( @{ $opt{shortname} } ) {'\
+			-e 'push @license, map { /^License:\h*\Q$name\E\n\h+(\S[^\n]*(?:\n\h+\S[^\n]*)*)/ } @section };'\
+		-e 'for $glob ( @{ $opt{grantglob} } ) {'\
+			-e 'push @files, grep { /^Files:\n?\h(?:\S[^\n]*\n?\h)*\Q$glob\E\s/ } @section };'\
+		-e '@grant = map { /^License(?:-Grant:|:\h*\S[^\n]*)\h*\n\h+(\S[^\n]*(?:\n\h+\S[^\n]*)*)/mg } @files;'\
+		-e '@firstline_re = map { qr/^\Q$_\E/ } @{ $opt{shebang} };'\
+		-e '$nonverb_re = Regexp::Assemble->new->add( "\\W+", map { "\\W+(?:$_)\\W+" } @{ $opt{nonverb} } )->as_string;'\
+		-e '@content_re = map { s/\W+/[**]/g; s/\Q[**]\E\d\Q[**]\E/[**]\\S{0,2}[**]/g; s/\Q[**]\E/$nonverb_re/g; qr/$_/ } @license, @grant;'\
+		-e '$inspect = sub {'\
+			-e '$file = $_[0];'\
+			-e 'if (@firstline_re) {'\
+				-e '($head) = $_[0]->lines( { count => 1 } );'\
+				-e 'push @match, quotemeta and return '\
+					-e 'if any { $head =~ $_ } @firstline_re };'\
+			-e 'push @match, quotemeta'\
+				-e 'if any { $file->slurp_raw =~ $_ } @content_re };'\
+		-e 'for (@ARGV) {'\
+			-e 'path($_)->is_dir'\
+			-e '? path($_)->visit( \&$inspect, { recurse => 1 } )'\
+			-e ': &$inspect( path($_) ) };'\
+		-e '$files_re = Regexp::Assemble->new->add( @match, @{ $opt{regex} } );'\
+		-e 'print $files_re->as_string =~ s/\(\?:/\(/gr;'\
+		-- "$@"
+}
+
+SKIPFILES='skip|meta'
+
+# cleanup stray hint files from a previous run
+find -type f -regextype posix-egrep -regex "^.*:($SKIPFILES)$" -delete
+
+# omit files not copyright protected nor stating copyright or licensing
+RE_omit='.*\.(vcxproj(\.filters)?)|tests/utf(8|16)_corpus.txt'
+
+1>&2 echo 'skip binary files without parsable metadata ...'
+RE_skip='.*\.(au|dds|j2k|ppm|raw|tga)'
+find ./* -type f -regextype posix-egrep -regex "^($RE_skip)$" -exec sh -c 'echo "License: UNKNOWN" > {}:skip' ';'
+
+1>&2 echo 'extract metadata from binary files ...'
+RE_meta='.*\.(gif|jpg|mp3|ogg|png|ttf|wav)'
+exiftool '-textOut!' %d%f.%e:meta -short -short -recurse -ext gif -ext mp3 -ext ogg -ext png -ext ttf -ext wav .
+
+RE_SKIP="$RE_omit|$RE_skip|$RE_meta"
+
+# generated files
+RE_FSFUL_configure='(.*/)?configure'
+RE_FSFULLR='(.*/)?(aclocal|libtool|lt(options|sugar|version|~obsolete))\.m4'
+RE_FSFULLR_Makefile='(.*/)?Makefile\.in'
+RE_GPL_Autoconf='(.*/)?(compile|config\.(guess|sub)|depcomp|missing|test-driver|ylwrap)'
+RE_GPL_Libtool='(.*/)?ltmain\.sh'
+RE_X11='(.*/)?install-sh'
+RE_generated="$RE_FSFUL_configure|$RE_FSFULLR|$RE_FSFULLR_Makefile|$RE_GPL_Autoconf|$RE_GPL_Libtool|$RE_X11"
+
+# non-generated files (despite matching name) covered by later patterns
+RE_non_generated='tests/third_party/freetype/configure|tests/third_party/zlib/.*|system/lib/libc/musl/configure'
+
+# left-truncated file wildcards
+RE_freetype='tests/third_party/freetype/.*'
+RE_bullet='tests/third_party/bullet/.*'
+RE_odfg='tests/third_party/bullet/Extras/ConvexDecomposition/.*'
+RE_gimpact='tests/third_party/bullet/src/BulletCollision/Gimpact/gim_.*'
+RE_box2d='tests/third_party/box2d/.*'
+RE_glui='tests/third_party/bullet/Extras/glui/.*|tests/third_party/box2d/glui/.*'
+RE_freeglut='tests/third_party/box2d/freeglut/.*|system/include/GL/freeglut_std\.h'
+RE_poppler='tests/third_party/poppler/.*'
+RE_sdl='system/include/SDL/.*'
+RE_openjpeg='tests/third_party/openjpeg/.*'
+RE_zlib='tests/third_party/zlib/.*|tests/third_party/freetype/src/gzip/.*'
+RE_musl='system/lib/libc/musl/.*'
+RE_musl_nonotice='system/lib/libc/musl/(arch/emscripten/bits/.*|ldso/dlstart.c|arch/emscripten/crt_arch.h)'
+RE_closure='third_party/closure-compiler/.*'
+RE_terser='third_party/terser/.*'
+RE_websockify='third_party/websockify/.*'
+RE_unwind='system/lib/libunwind/.*'
+RE_llvm='system/(include/libcxx|lib/compiler-rt|lib/libcxx(abi)?)/.*'
+RE_ws='tests/sockets/ws/.*'
+RE_enet='tests/third_party/enet/.*'
+RE_lua='tests/third_party/lua/.*'
+RE_freealut='tests/third_party/freealut/.*'
+RE_lzma='tests/third_party/lzma/.*'
+RE_coremark='tests/third_party/coremark/.*'
+RE_sauer='tests/cubescript/.*|tests/cube2hash/.*'
+
+# other file wildcards
+RE_musl_nagy='system/lib/libc/musl/src/(prng/random.c|search/.*\.c)'
+
+# licensing patterns misdetected by licensecheck
+RE_EMSCRIPTEN_mit=$(grep --files-with-matches --recursive --null --null-data --perl-regexp \
+ --regexp='/[/*]\W+@license\W+Copyright[ 0-9,-]+The Emscripten Authors\W+SPDX-License-Identifier: MIT\W+[/*]/' \
+ | tr '\0' '|' | sed -e 's/|$//')
+#RE_EMSCRIPTEN_mit==$(_file_regex --grantglob 'src/Fetch.js' *)
+RE_EMSCRIPTEN_ncsa=$(_file_regex --grantglob '*' *)
+RE_EXPAT_lua=$(_file_regex --grantglob 'tests/third_party/lua/*' *)
+RE_LLVM_apache2_llvm=$(_file_regex --grantglob 'system/lib/compiler-rt/*' *)
+RE_LLVM_ncsa=$(_file_regex --grantglob 'system/lib/compiler-rt/lib/asan/asan_mapping_emscripten.h' *)
+RE_PD_kyle=$(_file_regex --grantglob 'tests/third_party/cubegeom/*' *)
+RE_fsfullr_sun=$(_file_regex --shortname 'FSFULLR~Sun' *)
+RE_misc_sgi=$(_file_regex --shortname 'misc~SGI' *)
+RE_fsfullr_=$(grep --files-with-matches --recursive --null \
+ --regexp='as long as this notice is preserved' \
+ | tr '\0' '|' | sed -e 's/|$//')
+RE_bsd_cmake=$(grep --files-with-matches --recursive --null \
+ --regexp='For details see the accompanying COPYING-CMAKE-SCRIPTS file' \
+ | tr '\0' '|' | sed -e 's/|$//')
+
+RE_COMMON="$RE_omit|$RE_EMSCRIPTEN_ncsa|$RE_EMSCRIPTEN_mit"
+
+# TODO: automate more of this manual cleanup for each Files section...:
+#  * fork section for each subsequent wildcard
+#  * reduce copyright holders/years as needed for original and forked sections
+# TODO: automate more of this manual cleanup:
+#  * strip garbage copyright holders
+#  * optionally merge equally licensed Files sections
+#  * do "sort -k2 -k1,1 -u" on copyright holders
+#  * merge copyright years for each copyright holder
+# TODO: strip files matching glob in current (only, no later) section
+_licensecheck() {
+	SKIPFILES=$SKIPFILES perl -MGetopt::Long=:config,gnu_getopt -MIPC::System::Simple=capture -MList::Util=uniq \
+		-e 'GetOptions ( \%opt, "check=s", "ignore=s", "shortname=s", "subset=s", "merge-licenses" );'\
+		-e '@subset = split( " ", $opt{subset} );' \
+		-e '$subset_globs = join "\n ", @subset;' \
+		-E 'if ( $subset_globs =~ /^[*]$/ ) { say STDERR "check default section(s) ..." }' \
+		-E 'elsif ( @subset and $opt{shortname} ) { say STDERR "check $opt{shortname} section(s) @subset ..." }' \
+		-E 'elsif (@subset) { say STDERR "check section(s) @subset ..." }' \
+		-E 'elsif ($opt{shortname} ) { say STDERR "check $opt{shortname} section(s) @subset ..." }' \
+		-E 'else { say STDERR "check remaining upstream section(s) ..." };' \
+		-e '@cmd = ( qw(licensecheck --copyright --deb-machine --recursive --lines 0), "--check", $opt{check}, "--ignore", $opt{ignore}, $opt{"merge-licenses"} ? "--merge-licenses" : (), "--" );'\
+		-E 'say STDERR "@cmd *" if $ENV{DEBUG};'\
+		-e '$_ = $dump = capture( @cmd, glob "*" );'\
+		-e 'if ( !$ENV{NOGLOBMERGE} and grep /[*]/, @subset ) { s/^.*?\n\nFiles: \K.*?(?=\n\w)/$subset_globs/s }' \
+		-e 'elsif (@subset) { s/^.*?\n\nFiles: \K/$subset_globs\n /s };' \
+		-e 'if ( $subset[0] ne "*" ) { s/^.*?\n\n//s };' \
+		-e 's/^Files:\K /\n /mg;' \
+		-e 's/^Copyright:\K /\n  /mg;' \
+		-e 's/(?:(?<=^  )|(?<=\d{4})),\K (?=\d{4})//mg;' \
+		-e 's/(\n  \d{4}(?:[-,]\d{4})*, )(David Turner), (Robert Wilhelm), and (Werner Lemberg)\.?$/$1$2$1$3$1$4/mg;' \
+		-e 's/(\n  \d{4}(?:[-,]\d{4})*, )(David Turner), (Robert Wilhelm), (Werner Lemberg),? and (George Williams)\.?$/$1$2$1$3$1$4$1$5/mg;' \
+		-e 's/(\n  \d{4}(?:[-,]\d{4})*, )(David Turner), (Robert Wilhelm), (Werner Lemberg), and (suzuki toshiya)\.?$/$1$2$1$3$1$4$1$5/mg;' \
+		-e 's/(\n  \d{4}(?:[-,]\d{4})*, )(Dere[gk] Clegg), (Michael Toftdal)\.?$/$1$2$1$3/mg;' \
+		-e 's/(\n  \d{4}(?:[-,]\d{4})*, )(Just van Rossum), (David Turner), (Robert Wilhelm), and (Werner Lemberg)\.?$/$1$2$1$3$1$4$1$5/mg;' \
+		-e 's/(\n  \d{4}(?:[-,]\d{4})*, )(Masatake YAMATO)(?:,| and) (Red ?[Hh]at K\.K[.,]*)$/$1$2$1$3/mg;' \
+		-e 's/(\n  \d{4}(?:[-,]\d{4})*, )(suzuki toshiya), (Masatake YAMATO)(?:,| and) (Red ?[Hh]at K\.K[.,]*)$/$1$2$1$3$1$4/mg;' \
+		-e 's/(\n  \d{4}(?:[-,]\d{4})*, )(Oran Agra) and (Mickey Gabel)\.?$/$1$2$1$3/mg;' \
+		-e 's/^  \d{4}(?:[-,]\d{4})*, David Turner\K[,.]?$/ <david\@freetype.org>/mg;' \
+		-e 's/^  \d{4}(?:[-,]\d{4})*, \KDereg Clegg$/Derek Clegg/mg;' \
+		-e 's/^  \d{4}(?:[-,]\d{4})*, \KRed ?[Hh]at K\.K[.,]?/Red Hat K.K./mg;' \
+		-e 's/^  \d{4}(?:[-,]\d{4})*, Albert Chin-A-Young\K\.//mg;' \
+		-e 's/^  \d{4}(?:[-,]\d{4})*, Roberto Alameda\K\.//mg;' \
+		-e 's/(\n  \d{4}(?:[-,]\d{4})*, )(Gino van den Bergen) \/ (\w+.*)$/$1$2$1$3/msg;' \
+		-e 's/\n  (\d{4}(?:[-,]\d{4})*, )(John Kew|Paul Rademacher), (\d{4})/\n  $1$2\n  $3/mg;' \
+		-e 's/\n  (\d{4}(?:[-,]\d{4})*, )(Paul Rademacher) \(this file, (Bill Baxter) (\d{4})\)/\n  $1$2\n  $4, $3/mg;' \
+		-e 's/\n  (Ricardo Padrela) (\d{4}(?:[-,]\d{4})*)$/\n  $2, $1/mg;' \
+		-e 's/^  \d{4}(?:[-,]\d{4})*, (?:Advanced Micro Devices, Inc\.|Erin Catto|Erwin Coumans)\K http\S+//mg;' \
+		-e 's/:(?:$ENV{SKIPFILES})$//mg;' \
+		-e 'if ($opt{shortname}) { s/^License: \K(.*)/ join " and\/or ", uniq sort grep( !m{\AUNKNOWN\Z}, split(" and\/or ",$1), $opt{shortname} ) /mge };' \
+		-e 'print $_;'\
+		-- "$@" \
+		>> debian/copyright_hints
+}
+
+rm -f debian/copyright_hints
+
+# initially, check all to know roughly what to group and in which order
+#rm -f debian/copyright_hints
+#_licensecheck '' --check ".*" --ignore "^($RE_SKIP|$RE_generated|debian/.*)$"
+#exit 0
+
+# check default licensed files first, except within embedded projects
+_licensecheck --subset '*' --check "^($RE_EMSCRIPTEN_ncsa)$" --ignore "^($RE_SKIP|$RE_enet|$RE_freealut|debian/.*)$"
+
+# check embedded projects, with merged licenses where reliable
+#  * freetype embeds Zlib and X11~The_Open_Group code
+#  * bullet embeds glui, ODFG and GIMPACT code, but *not* generated code
+#  * box2d embeds glui and freeglut code, but *not* generated code
+#  * poppler embeds BSD~cmake and FSFULLR~ code
+#  * zlib does *not* embed generated code
+#  * musl embeds no-notice and Nagy and FSFULLR~SunPro and FSFULLR~SunSoft code, but *not* generated code
+_licensecheck --subset 'tests/third_party/freetype/*' --check "^($RE_freetype)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|$RE_zlib|debian/.*)$" --merge-licenses
+_licensecheck --subset 'tests/third_party/bullet/*' --check "^($RE_bullet)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_odfg|$RE_gimpact|$RE_glui|debian/.*)$"
+_licensecheck --subset 'tests/third_party/bullet/Extras/ConvexDecomposition/*' --check "^($RE_odfg)$" --ignore "^($RE_COMMON|$RE_SKIP|debian/.*)$"
+_licensecheck --subset 'tests/third_party/bullet/src/BulletCollision/Gimpact/gim_*' --check "^($RE_gimpact)$" --ignore "^($RE_COMMON|$RE_SKIP|debian/.*)$"
+_licensecheck --subset 'tests/third_party/box2d/*' --check "^($RE_box2d)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_glui|$RE_freeglut|debian/.*)$"
+_licensecheck --subset 'tests/third_party/box2d/glui/* tests/third_party/bullet/Extras/glui/*' --check "^($RE_glui)$" --ignore "^($RE_COMMON|$RE_SKIP|debian/.*)$"
+_licensecheck --subset 'tests/third_party/box2d/freeglut/*' --check "^($RE_freeglut)$" --ignore "^($RE_COMMON|$RE_SKIP|debian/.*)$"
+_licensecheck --subset 'tests/third_party/poppler/*' --check "^($RE_poppler)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|$RE_bsd_cmake|$RE_fsfullr_|debian/.*)$" --merge-licenses
+_licensecheck --subset 'tests/third_party/poppler/*' --shortname 'BSD~cmake' --check "^($RE_bsd_cmake)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset '?FSFULLR~ tests/third_party/poppler/*' --check "^($RE_fsfullr_)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'system/include/SDL/*' --check "^($RE_sdl)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'tests/third_party/openjpeg/*' --check "^($RE_openjpeg)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'tests/third_party/zlib/* tests/third_party/freetype/src/gzip/*' --check "^($RE_zlib)$" --ignore "^($RE_COMMON|$RE_SKIP|debian/.*)$"
+_licensecheck --subset 'system/lib/libc/musl/*' --check "^($RE_musl)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_musl_nonotice|$RE_musl_nagy|$RE_fsfullr_sun|debian/.*)$"
+_licensecheck --subset 'system/lib/libc/musl/arch/emscripten/bits/* system/lib/libc/musl/ldso/dlstart.c system/lib/libc/musl/arch/emscripten/crt_arch.h' --check "^($RE_musl_nonotice)$" --ignore "^($RE_COMMON|$RE_SKIP|debian/.*)$"
+_licensecheck --subset 'system/lib/libc/musl/src/prng/random.c system/lib/libc/musl/src/search/*.c' --check "^($RE_musl_nagy)$" --ignore "^($RE_COMMON|$RE_SKIP|debian/.*)$"
+_licensecheck --subset 'system/lib/libc/musl/*' --shortname 'FSFULLR~Sun' --check "^($RE_fsfullr_sun)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'third_party/closure-compiler/*' --check "^($RE_closure)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'third_party/terser/*' --check "^($RE_terser)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'third_party/websockify/*' --check "^($RE_websockify)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'system/lib/libunwind/*' --check "^($RE_unwind)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'system/lib/compiler-rt/*' --shortname 'Apache-2.0 with LLVM exception' 'system/lib/libcxx/* system/lib/libcxxabi/*' --check "^($RE_LLVM_apache2_llvm)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'system/lib/compiler-rt/* system/lib/libcxx/* system/lib/libcxxabi/*' --check "^($RE_llvm)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|$RE_LLVM_apache2_llvm|$RE_LLVM_ncsa|debian/.*)$"
+_licensecheck --subset 'system/lib/compiler-rt/*' --shortname 'NCSA' --check "^($RE_LLVM_ncsa)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'tests/sockets/ws/*' --check "^($RE_ws)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'tests/third_party/enet/*' --check "^($RE_enet)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'tests/third_party/enet/*' --shortname 'Expat or NCSA' --check "^(?=$RE_enet)($RE_EMSCRIPTEN_ncsa)$" --ignore "^($RE_SKIP|debian/.*)$"
+_licensecheck --subset 'tests/third_party/lua/*' --shortname 'Expat~Lua' --check "^($RE_EXPAT_lua)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'tests/third_party/lua/*' --check "^($RE_lua)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|$RE_EXPAT_lua|debian/.*)$"
+_licensecheck --subset 'tests/third_party/freealut/*' --check "^($RE_freealut)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'tests/third_party/lzma/*' --check "^($RE_lzma)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'tests/third_party/lzma/*' --shortname 'Expat or NCSA' --check "^(?=$RE_lzma)($RE_EMSCRIPTEN_ncsa)$" --ignore "^($RE_SKIP|debian/.*)$"
+_licensecheck --subset 'tests/third_party/coremark/*' --check "^($RE_coremark)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+_licensecheck --subset 'tests/cubescript/* tests/cube2hash/*' --check "^($RE_sauer)$" --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|debian/.*)$"
+
+# check generated files
+_licensecheck --subset '*/configure' --check "^($RE_FSFUL_configure)$" --ignore "^($RE_COMMON|$RE_non_generated|debian/.*)$" --merge-licenses
+_licensecheck --subset '*/aclocal.m4 */libtool.m4 */ltoptions.m4 */ltsugar.m4 */ltversion.m4 */lt~obsolete.m4' --check "^($RE_FSFULLR)$" --ignore "^($RE_COMMON|$RE_non_generated|debian/.*)$" --merge-licenses
+_licensecheck --subset '*/Makefile.in' --check "^($RE_FSFULLR_Makefile)$" --ignore "^($RE_COMMON|$RE_non_generated|debian/.*)$" --merge-licenses
+_licensecheck --subset '*/compile */config.guess */config.sub */depcomp */missing */test-driver */ylwrap' --check "^($RE_GPL_Autoconf)$" --ignore "^($RE_COMMON|$RE_non_generated|debian/.*)$" --merge-licenses
+_licensecheck --subset '*/ltmain.sh' --check "^($RE_GPL_Libtool)$" --ignore "^($RE_COMMON|$RE_non_generated|debian/.*)$" --merge-licenses
+_licensecheck --subset '*/install-sh' --check "^($RE_X11)$" --ignore "^($RE_COMMON|$RE_non_generated|debian/.*)$" --merge-licenses
+
+# check files misdetected by licensecheck
+#  * exclude already covered box2d and poppler code
+_licensecheck --shortname 'Expat' --check "^($RE_EMSCRIPTEN_mit)$" --ignore "^($RE_EMSCRIPTEN_ncsa|$RE_SKIP|debian/.*)$"
+_licensecheck --shortname 'public-domain' --check "^($RE_PD_kyle)$" --ignore "^($RE_EMSCRIPTEN_ncsa|$RE_SKIP|debian/.*)$"
+_licensecheck --shortname 'misc~SGI' --check "^($RE_misc_sgi)$" --ignore "^($RE_EMSCRIPTEN_ncsa|$RE_SKIP|debian/.*)$"
+
+# check generally
+#  * omit non-copyright-protected Debian files
+_licensecheck --check '.*' --ignore "^($RE_COMMON|$RE_SKIP|$RE_generated|$RE_freetype|$RE_bullet|$RE_box2d|$RE_poppler|$RE_sdl|$RE_openjpeg|$RE_PD_kyle|$RE_misc_sgi|$RE_zlib|$RE_musl|$RE_musl_nonotice|$RE_closure|$RE_terser|$RE_websockify|$RE_unwind|$RE_llvm|$RE_ws|$RE_enet|$RE_lua|$RE_freealut|$RE_lzma|$RE_coremark|$RE_sauer|debian/.*)$"
+_licensecheck --subset 'debian/*' --check '^debian/' --ignore '^debian/(changelog|copyright(_hints)?|source/lintian-overrides)$'
+
+# cleanup hint files
+find -type f -regextype posix-egrep -regex "^.*:($SKIPFILES)$" -delete

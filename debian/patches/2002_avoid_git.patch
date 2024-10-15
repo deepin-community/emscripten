@@ -1,0 +1,16 @@
+Description: avoid calling git during build
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2020-09-21
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tools/install.py
++++ b/tools/install.py
+@@ -95,7 +95,7 @@
+   logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+   os.makedirs(target)
+   copy_emscripten(target)
+-  add_revision_file(target)
++  #add_revision_file(target)
+   return 0
+ 
+ 

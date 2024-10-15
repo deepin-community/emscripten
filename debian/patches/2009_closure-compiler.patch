@@ -1,0 +1,19 @@
+Description: work around old quirky closure-compiler in Debian
+ Fake closure-compiler version check,
+ which hangs with old Debian release.
+Author: Jonas Smedegaard <dr@jones.dk>
+Bug-Debian: https://bugs.debian.org/974984
+Last-Update: 2022-02-11
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tools/building.py
++++ b/tools/building.py
+@@ -725,7 +725,7 @@
+ 
+ 
+ def check_closure_compiler(cmd, args, env, allowed_to_fail):
+-  cmd = cmd + args + ['--version']
++  cmd = ['echo', 'Version: fake!']
+   try:
+     output = run_process(cmd, stdout=PIPE, env=env).stdout
+   except Exception as e:
