@@ -1,0 +1,17 @@
+# emscripten creates arch-independent wasm binaries, which results in lots
+# of false positives
+emscripten binary: arch-dependent-file-in-usr-share
+emscripten binary: arch-independent-package-contains-binary-or-object
+emscripten binary: no-code-sections
+
+# False positive; this is in embedded C code
+emscripten binary: bash-term-in-posix-shell '((__may_alias__))' [usr/share/emscripten/system/lib/libc/musl/configure:375]
+
+# These are all needed
+emscripten binary: repeated-path-segment
+
+# Verbatim from source code
+emscripten binary: spelling-error-in-copyright "GNU Library Public License" "GNU Library General Public License"
+emscripten binary: spelling-error-in-copyright "GNU Public License" "GNU General Public License"
+# False positive: a person's name
+emscripten binary: spelling-error-in-copyright Wich Which

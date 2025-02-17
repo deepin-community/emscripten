@@ -8,9 +8,10 @@
 #pragma once
 
 #include <limits.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <emscripten/html5.h>
+#include <emscripten/em_types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,9 +62,8 @@ extern "C" {
 // emscripten_fetch() while the operation is in progress.
 #define EMSCRIPTEN_FETCH_SYNCHRONOUS 64
 
-// If specified, it will be possible to call emscripten_fetch_wait() on the
-// fetch to test or wait for its completion.
 #define EMSCRIPTEN_FETCH_WAITABLE 128
+#pragma clang deprecated(EMSCRIPTEN_FETCH_WAITABLE, "waitable fetch requests are no longer implemented")
 
 struct emscripten_fetch_t;
 
@@ -85,11 +85,11 @@ typedef struct emscripten_fetch_attr_t {
 
   // Specifies the amount of time the request can take before failing due to a
   // timeout.
-  unsigned long timeoutMSecs;
+  uint32_t timeoutMSecs;
 
   // Indicates whether cross-site access control requests should be made using
   // credentials.
-  EM_BOOL withCredentials;
+  bool withCredentials;
 
   // Specifies the destination path in IndexedDB where to store the downloaded
   // content body. If this is empty, the transfer is not stored to IndexedDB at
@@ -137,7 +137,7 @@ typedef struct emscripten_fetch_attr_t {
 
 typedef struct emscripten_fetch_t {
   // Unique identifier for this fetch in progress.
-  unsigned int id;
+  uint32_t id;
 
   // Custom data that can be tagged along the process.
   void *userData;
@@ -190,111 +190,43 @@ typedef struct emscripten_fetch_t {
   // Specifies a human-readable form of the status code.
   char statusText[64];
 
-  _Atomic uint32_t __proxyState;
-
   // For internal use only.
   emscripten_fetch_attr_t __attributes;
 } emscripten_fetch_t;
 
 // Clears the fields of an emscripten_fetch_attr_t structure to their default
 // values in a future-compatible manner.
-void emscripten_fetch_attr_init(emscripten_fetch_attr_t *fetch_attr);
+void emscripten_fetch_attr_init(emscripten_fetch_attr_t * _Nonnull fetch_attr);
 
 // Initiates a new Emscripten fetch operation, which downloads data from the
 // given URL or from IndexedDB database.
-emscripten_fetch_t *emscripten_fetch(emscripten_fetch_attr_t *fetch_attr, const char *url);
+emscripten_fetch_t *emscripten_fetch(emscripten_fetch_attr_t * _Nonnull fetch_attr, const char * _Nonnull url);
 
-// Synchronously blocks to wait for the given fetch operation to complete. This
-// operation is not allowed in the main browser thread, in which case it will
-// return EMSCRIPTEN_RESULT_NOT_SUPPORTED. Pass timeoutMSecs=infinite to wait
-// indefinitely. If the wait times out, the return value will be
-// EMSCRIPTEN_RESULT_TIMEOUT.
-// The onsuccess()/onerror()/onprogress() handlers will be called in the calling
-// thread from within this function before this function returns.
-EMSCRIPTEN_RESULT emscripten_fetch_wait(emscripten_fetch_t *fetch, double timeoutMSecs);
+EMSCRIPTEN_RESULT emscripten_fetch_wait(emscripten_fetch_t * _Nonnull fetch, double timeoutMSecs) __attribute__((deprecated));
 
 // Closes a finished or an executing fetch operation and frees up all memory. If
 // the fetch operation was still executing, the onerror() handler will be called
 // in the calling thread before this function returns.
-EMSCRIPTEN_RESULT emscripten_fetch_close(emscripten_fetch_t *fetch);
+EMSCRIPTEN_RESULT emscripten_fetch_close(emscripten_fetch_t * _Nonnull fetch);
 
 // Gets the size (in bytes) of the response headers as plain text.
 // This must be called on the same thread as the fetch originated on.
 // Note that this will return 0 if readyState < HEADERS_RECEIVED.
-size_t emscripten_fetch_get_response_headers_length(emscripten_fetch_t *fetch);
+size_t emscripten_fetch_get_response_headers_length(emscripten_fetch_t * _Nonnull fetch);
 
 // Gets the response headers as plain text. dstSizeBytes should be
 // headers_length + 1 (for the null terminator).
 // This must be called on the same thread as the fetch originated on.
-size_t emscripten_fetch_get_response_headers(emscripten_fetch_t *fetch, char *dst, size_t dstSizeBytes);
+size_t emscripten_fetch_get_response_headers(emscripten_fetch_t * _Nonnull fetch, char * _Nonnull dst, size_t dstSizeBytes);
 
 // Converts the plain text headers into an array of strings. This array takes
 // the form {"key1", "value1", "key2", "value2", "key3", "value3", ..., 0 };
 // Note especially that the array is terminated with a null pointer.
-char **emscripten_fetch_unpack_response_headers(const char *headersString);
+char **emscripten_fetch_unpack_response_headers(const char * _Nonnull headersString);
 
 // This frees the memory used by the array of headers. Call this when finished
 // with the data returned by emscripten_fetch_unpack_response_headers.
 void emscripten_fetch_free_unpacked_response_headers(char **unpackedHeaders);
-
-#define emscripten_asmfs_open_t int
-
-// The following flags specify how opening files for reading works (from
-// strictest behavior to most flexible)
-
-// When a file is opened for reading, the file data must already fully reside in
-// memory. (most similar to MEMFS behavior)
-#define EMSCRIPTEN_ASMFS_OPEN_MEMORY    0
-
-// The file data does not need to be already in memory, but can reside in
-// IndexedDB.
-#define EMSCRIPTEN_ASMFS_OPEN_INDEXEDDB 1
-
-// The file will be downloaded from remote server, as long as it has an index
-// entry in local filesystem.
-#define EMSCRIPTEN_ASMFS_OPEN_REMOTE    2
-
-// A file entry does not need to exist on the local filesystem, but discovery
-// will be attempted from remote server via an XHR first.
-#define EMSCRIPTEN_ASMFS_OPEN_REMOTE_DISCOVER 3
-
-// Specifies how calls to non-truncating open(), fopen(), std::ifstream etc.
-// behave on the calling thread.
-void emscripten_asmfs_set_file_open_behavior(emscripten_asmfs_open_t behavior);
-
-// Returns the current file open behavior modein the calling thread.
-emscripten_asmfs_open_t emscripten_asmfs_get_file_open_behavior();
-
-// Records the URL from where the given file on the ASMFS filesystem can be
-// obtained from.
-void emscripten_asmfs_set_remote_url(const char *filename, const char *remoteUrl);
-
-// Given a filename, outputs the remote URL address that file can be located in.
-void emscripten_asmfs_remote_url(const char *filename, char *outRemoteUrl, int maxBytesToWrite);
-
-// Unloads the given file from the ASMFS filesystem. Call this function to save
-// memory from files that have been already loaded in to memory and will no
-// longer be needed.
-void emscripten_asmfs_unload_data(const char *pathname);
-
-// Starts an asynchronous preload of a file from the given URL to the local
-// filesystem to destination path 'pathname' for synchronous access on the main
-// thread. Specify a onsuccess callback in options structure to be notified of
-// when the transfer finishes.
-// The resulting download will always be performed with the flag
-// EMSCRIPTEN_FETCH_LOAD_TO_MEMORY and without the flags
-// EMSCRIPTEN_FETCH_SYNCHRONOUS | EMSCRIPTEN_FETCH_WAITABLE |
-// EMSCRIPTEN_FETCH_STREAM_DATA. The remaining flags
-// EMSCRIPTEN_FETCH_NO_DOWNLOAD, EMSCRIPTEN_FETCH_PERSIST_FILE,
-// EMSCRIPTEN_FETCH_APPEND/REPLACE are customizable in the options field. In
-// particular, if EMSCRIPTEN_FETCH_NO_DOWNLOAD is passed, then the file is
-// loaded to memory for synchronous access by looking at IndexedDB only.
-EMSCRIPTEN_RESULT emscripten_asmfs_preload_file(const char *url, const char *pathname, int mode, emscripten_fetch_attr_t *options);
-
-// Computes the total amount of bytes in memory utilized by the filesystem at
-// the moment.
-// Note: This function can be slow since it walks through the whole filesystem.
-uint64_t emscripten_asmfs_compute_memory_usage();
 
 #ifdef __cplusplus
 }

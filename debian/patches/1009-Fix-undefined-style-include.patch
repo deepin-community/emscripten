@@ -7,8 +7,6 @@ The css file is already included in css_files below.
  site/source/_themes/emscripten_sphinx_rtd_theme/layout.html | 5 -----
  1 file changed, 5 deletions(-)
 
-diff --git a/site/source/_themes/emscripten_sphinx_rtd_theme/layout.html b/site/source/_themes/emscripten_sphinx_rtd_theme/layout.html
-index 2ceb835..a04c412 100644
 --- a/site/source/_themes/emscripten_sphinx_rtd_theme/layout.html
 +++ b/site/source/_themes/emscripten_sphinx_rtd_theme/layout.html
 @@ -33,11 +33,6 @@

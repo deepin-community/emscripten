@@ -1,0 +1,21 @@
+From: Sebastian Ramacher <sramacher@debian.org>
+Date: Tue, 31 Dec 2024 15:02:24 +0100
+Subject: Lower expected LLVM version to 19
+
+---
+ tools/shared.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tools/shared.py b/tools/shared.py
+index bd8feff..f324530 100644
+--- a/tools/shared.py
++++ b/tools/shared.py
+@@ -59,7 +59,7 @@ SKIP_SUBPROCS = False
+ # This version currently matches the node version that we ship with emsdk
+ # which means that we can say for sure that this version is well supported.
+ MINIMUM_NODE_VERSION = (16, 20, 0)
+-EXPECTED_LLVM_VERSION = 20
++EXPECTED_LLVM_VERSION = 19
+ 
+ # These get set by setup_temp_dirs
+ TEMP_DIR = None

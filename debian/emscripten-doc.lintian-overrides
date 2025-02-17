@@ -1,0 +1,5 @@
+# Verbatim from source code
+emscripten-doc binary: spelling-error-in-copyright "GNU Library Public License" "GNU Library General Public License"
+emscripten-doc binary: spelling-error-in-copyright "GNU Public License" "GNU General Public License"
+# False positive: a person's name
+emscripten-doc binary: spelling-error-in-copyright Wich Which

@@ -9,7 +9,12 @@ include /usr/share/dpkg/pkg-info.mk
 # resolve if release is experimental
 EXP_RELEASE = $(filter experimental% UNRELEASED,$(DEB_DISTRIBUTION))
 
-DEB_VERSION_UPSTREAM_ORIG = $(firstword $(subst ~,$() ,$(DEB_VERSION_UPSTREAM)))
+# will run a subset of tests picked from debian/random200.txt
+RUN_SUBSET_TESTS = 1
+
+# Handle both "~dfsg" and the future "+dfsg"
+DEB_VERSION_UPSTREAM_ORIG := $(firstword $(subst ~,$() ,$(DEB_VERSION_UPSTREAM)))
+DEB_VERSION_UPSTREAM_ORIG := $(firstword $(subst +,$() ,$(DEB_VERSION_UPSTREAM_ORIG)))
 
 DOCS_SRC = README.md
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
@@ -34,7 +39,7 @@ export EMCC_CORES=$(DEB_BUILD_OPTION_PARALLEL)
 endif
 
 EMCC = $(_ENV) emcc
-TESTS_RUNNER = $(_ENV) EMTEST_LACKS_CLOSURE_COMPILER=1 EMTEST_SKIP_V8=1 tests/runner.py --skip-slow
+TESTS_RUNNER = $(_ENV) EMTEST_LACKS_CLOSURE_COMPILER=1 EMTEST_SKIP_V8=1 EMTEST_SKIP_WASM64=1 EMTEST_SKIP_EH=1 test/runner.py --skip-slow
 
 # files generated during build
 SOURCE_MAP_MIN_JS = src/emscripten-source-map.min.js
@@ -44,7 +49,8 @@ NEON_H = system/include/compat/arm_neon.h
 LIBS_ALL = $(shell $(_ENV) embuilder --em-config .emscripten --help \
  | grep -Po '^        \K\S+')
 LIBSTEMS_PORTS = $(shell find tools/ports -maxdepth 1 -type f \
- | grep -Po 'tools/ports/\K[a-z]+' | sort -u)
+ | grep -Po 'tools/ports/\K[a-z]+' | sort -u) \
+ $(shell find tools/ports -maxdepth 2 -type f | grep -Po 'tools/ports/\Kcontrib/[a-z0-9]+' | tr / . | sort -u)
 LIBS_MAIN = $(filter-out $(addsuffix %,$(LIBSTEMS_PORTS)),$(LIBS_ALL))
 
 # requires third-party tests
@@ -71,6 +77,7 @@ ERRORS_other += \
  test_giflib \
  test_libjpeg \
  test_libpng \
+ test_contrib_ports \
  test_sdl2_config \
  test_sdl2_gfx_linkable \
  test_sdl2_linkable \
@@ -136,36 +143,34 @@ FAILS_other += \
 
 BIN_WRAPPER_SYMLINK = \
  em++ \
+ em-config \
  emar \
  embuilder \
  emcc \
  emcmake \
- em-config \
  emconfigure \
+ emdump \
+ emdwp \
  emmake \
+ emnm \
+ emprofile \
  emranlib \
  emrun \
  emscons \
- emsize
-
-BIN_WRAPPER_TOOLS_SYMLINK = \
- emdump \
- emdwp \
- emnm \
- emprofile \
+ emsize \
+ emstrip \
+ emsymbolizer
 
 NONSCRIPT_EXECUTABLE = \
+ cache/cache.lock \
  system/lib/libcxx/readme.txt \
- tests/other/wasm_sourcemap/foo.wasm \
- tests/other/wasm_sourcemap_dead/t.wasm \
+ test/other/wasm_sourcemap/foo.wasm \
+ test/other/wasm_sourcemap_dead/t.wasm \
  tools/system_libs.py
 
 SCRIPT_NOT_EXECUTABLE = \
- src/compiler.js \
- tests/embind/build_benchmark \
- tests/sourcemap2json.js \
- tools/preprocessor.js \
- tools/run_python_compiler.sh
+ test/embind/build_benchmark \
+ test/sourcemap2json.js
 
 override_dh_clean:
 	dh_clean -- $(DOCS) $(CHANGELOGS)
@@ -181,10 +186,8 @@ override_dh_auto_configure: $(SOURCE_MAP_MIN_JS) $(NEON_H)
 # setup binaries for use during build-time testing
 	mkdir --parents debian/tmpbin
 	sed "s,/usr/share/emscripten/,$$PWD/," < debian/bin/wrapper > debian/tmpbin/wrapper
-	sed "s,/usr/share/emscripten/,$$PWD/," < debian/bin/wrapper-tools > debian/tmpbin/wrapper-tools
-	chmod +x debian/tmpbin/wrapper debian/tmpbin/wrapper-tools
+	chmod +x debian/tmpbin/wrapper
 	$(foreach symlink,$(BIN_WRAPPER_SYMLINK),ln -fsT wrapper debian/tmpbin/$(symlink);)
-	$(foreach symlink,$(BIN_WRAPPER_TOOLS_SYMLINK),ln -fsT wrapper-tools debian/tmpbin/$(symlink);)
 
 execute_before_dh_auto_build:
 	$(EMCC) --generate-config
@@ -210,17 +213,21 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	sphinx-build -b html site/source debian/doc/html
 endif
 
-# disable tests, too many where failing
-ifeq (0,1)
+execute_before_dh_auto_test:
+	ln -sT /usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf test/freetype/LiberationSansBold.ttf
+
+execute_after_dh_auto_test:
+	rm -f test/freetype/LiberationSansBold.ttf
+
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 override_dh_auto_test:
-	$(EMCC) tests/hello_world.c
-	eslint --no-eslintrc --quiet --env browser --parser-options=ecmaVersion:6 --format unix a.out.js
-	$(EMCC) -O3 tests/hello_world.c
-	eslint --no-eslintrc --quiet --env browser --parser-options=ecmaVersion:6 --format unix a.out.js
+	pkgjs-install-minimal
+	$(EMCC) test/hello_world.c
+	esbuild --target=es6 a.out.js > /dev/null
+	$(EMCC) -O3 test/hello_world.c
+	esbuild --target=es6 a.out.js > /dev/null
 	rm a.out.js a.out.wasm
-	ln -sT /usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf \
-		tests/freetype/LiberationSansBold.ttf
+ifneq (1,$(RUN_SUBSET_TESTS))
 	$(TESTS_RUNNER) test_zlib_configure test_zlib_cmake
 	$(TESTS_RUNNER) \
 		$(CHECK_MODES_coreX) $(CHECK_MODES_coreJS) \
@@ -238,37 +245,18 @@ override_dh_auto_test:
 			$(addprefix skip:$(mode).,$(FAILS_coreJS))) \
 		$(foreach mode,$(CHECK_MODES_coreJS1S),\
 			$(addprefix skip:$(mode).,$(FAILS_coreJS1S))) \
-		$(if $(EXP_RELEASE),|| true)
 	$(TESTS_RUNNER) other \
-		$(addprefix skip:other.,$(ERRORS_other) $(FAILS_other)) \
-		$(if $(EXP_RELEASE),|| true)
-ifneq (,$(EXP_RELEASE))
-	$(TESTS_RUNNER) \
-		$(addprefix core1.,$(FAILS_core1)) \
-		$(addprefix core2.,$(FAILS_core2)) \
-		$(foreach mode,$(CHECK_MODES_coreX) $(CHECK_MODES_coreJS),\
-			$(addprefix $(mode).,$(FAILS_core))) \
-		$(foreach mode,$(CHECK_MODES_coreX),\
-			$(addprefix $(mode).,$(FAILS_coreX))) \
-		$(foreach mode,$(CHECK_MODES_coreZ),\
-			$(addprefix $(mode).,$(FAILS_coreZ))) \
-		$(foreach mode,$(CHECK_MODES_core23Z),\
-			$(addprefix $(mode).,$(FAILS_core23Z))) \
-		$(foreach mode,$(CHECK_MODES_coreJS),\
-			$(addprefix $(mode).,$(FAILS_coreJS))) \
-		$(foreach mode,$(CHECK_MODES_coreJS1S),\
-			$(addprefix $(mode).,$(FAILS_coreJS1S))) \
-		$(addprefix other.,$(FAILS_other)) \
-		$(addprefix skip:other.,$(ERRORS_other)) \
-		|| true
-endif
-	rm -f tests/freetype/LiberationSansBold.ttf
+		$(addprefix skip:other.,$(ERRORS_other) $(FAILS_other))
+else
+	$(TESTS_RUNNER) $(shell cat debian/random200.txt | tr '\n' ' ')
 endif
 endif
 
 execute_after_dh_auto_install:
 	$(call _mkman, debian/tmpbin/em++, debian/em++.1,\
 		emscripten compiler for WASM and JavaScript like g++ or clang++)
+	$(call _mkman_sloppy, debian/tmpbin/em-config, debian/em-config.1,\
+		helper tool to read emscripten configuration variables)
 	$(call _mkman, debian/tmpbin/emar, debian/emar.1,\
 		emscripten archiver for WASM and JavaScript like ar or llvm-ar)
 	$(call _mkman, debian/tmpbin/embuilder, debian/embuilder.1,\
@@ -277,28 +265,31 @@ execute_after_dh_auto_install:
 		emscripten compiler for WASM and JavaScript like gcc or clang)
 	$(call _mkman_sloppy, debian/tmpbin/emcmake, debian/emcmake.1,\
 		emscripten wrapper cmake)
-	$(call _mkman_sloppy, debian/tmpbin/em-config, debian/em-config.1,\
-		helper tool to read emscripten configuration variables)
 	$(call _mkman_sloppy, debian/tmpbin/emconfigure, debian/emconfigure.1,\
 		emscripten wrapper around ./configure scripts)
-	$(call _mkman_sloppy, debian/tmpbin/emmake, debian/emmake.1,\
-		emscripten wrapper around make)
-	$(call _mkman, debian/tmpbin/emranlib, debian/emranlib.1,\
-		emscripten wrapper around llvm-ranlib)
-	$(call _mkman, debian/tmpbin/emrun, debian/emrun.1,\
-		emscripten tool to compile as an HTML page)
-#	$(call _mkman, debian/tmpbin/emscons, debian/emscons.1,\
-#		emscripten wrapper around scons)
-	$(call _mkman, debian/tmpbin/emsize, debian/emsize.1,\
-		emscripten replacement for size)
 	$(call _mkman, debian/tmpbin/emdump, debian/emdump.1,\
 		emscripten tool to print out statistics about compiled code sizes)
 	$(call _mkman, debian/tmpbin/emdwp, debian/emdwp.1,\
 		emscripten wrapper around llvm-dwp)
+	$(call _mkman_sloppy, debian/tmpbin/emmake, debian/emmake.1,\
+		emscripten wrapper around make)
 	$(call _mkman, debian/tmpbin/emnm, debian/emnm.1,\
 		emscripten wrapper around llvm-nm)
 	$(call _mkman, debian/tmpbin/emprofile, debian/emprofile.1,\
 		emscripten profiler tool)
+	$(call _mkman, debian/tmpbin/emranlib, debian/emranlib.1,\
+		emscripten wrapper around llvm-ranlib)
+	$(call _mkman, debian/tmpbin/emrun, debian/emrun.1,\
+		emscripten tool to compile as an HTML page)
+#	emscons doesn't have a --help option
+#	$(call _mkman, debian/tmpbin/emscons, debian/emscons.1,\
+#		emscripten wrapper around scons)
+	$(call _mkman, debian/tmpbin/emsize, debian/emsize.1,\
+		emscripten replacement for size)
+	$(call _mkman, debian/tmpbin/emstrip, debian/emstrip.1,\
+		emscripten wrapper around llvm-strip)
+	$(call _mkman, debian/tmpbin/emsymbolizer, debian/emsymbolizer.1,\
+		emscripten utility for looking up symbol names and/or file+line numbers of code addresses)
 
 # avoid cache sanity hint, license and Visual Studio files
 ifeq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
@@ -310,6 +301,7 @@ override_dh_install:
 		COPYING GPL LICENSE License.txt license.dox \
 		.dsp .dsw .sln .vcproj) \
 		$(INSTALL_FROZEN_CACHE)
+	rmdir debian/emscripten/usr/share/emscripten/cache/build
 
 override_dh_installdocs:
 	dh_installdocs -- $(DOCS)
@@ -351,19 +343,9 @@ $(SOURCE_MAP_MIN_JS): \
 # custom rule: get source-only part of upstream source-map script
 # (see README.source)
 get-source-map-footer:
-	wget -O- https://github.com/emscripten-core/emscripten/raw/$(DEB_VERSION_UPSTREAM_ORIG)/src/emscripten-source-map.min.js \
+	wget -O- https://raw.githubusercontent.com/emscripten-core/emscripten/$(DEB_VERSION_UPSTREAM_ORIG)/src/emscripten-source-map.min.js \
 		| tail -n +2 \
 		> debian/missing-sources/source-map-footer_$(DEB_VERSION_UPSTREAM_ORIG).js
-
-# TODO: drop when bug#1000136 is fixed
-override_dh_sphinxdoc:
-	dh_sphinxdoc -i || { \
-	rm -rf debian/emscripten-doc/usr/share/doc/emscripten-doc/html/.doctrees;\
-	find debian/emscripten-doc -type f -name .buildinfo -delete;\
-	ln --symbolic --force \
-		--target-directory=debian/emscripten-doc/usr/share/doc/emscripten-doc/html/_static/ \
-		$(addprefix ../../../../javascript/sphinxdoc/1.0/,doctools.js jquery.js language_data.js searchtools.js underscore.js);\
-	}
 
 override_dh_gencontrol:
 	dh_gencontrol -- -V"types:Version=$(shell jq --raw-output .version < Xtypes/package.json)~$(DEB_VERSION)"

@@ -6,15 +6,17 @@ Description: support NodeJS v12.x
 Author: Jonas Smedegaard <dr@jones.dk>
 Last-Update: 2021-11-22
 ---
-This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
---- a/tests/common.py
-+++ b/tests/common.py
-@@ -426,7 +426,7 @@
-       '--stack-trace-limit=50',
-       # Opt in to node v15 default behaviour:
-       # https://nodejs.org/api/cli.html#cli_unhandled_rejections_mode
--      '--unhandled-rejections=throw',
-+      '--unhandled-rejections=strict',
-       # Include backtrace for all uncuaght exceptions (not just Error).
-       '--trace-uncaught',
-     ]
+ test/common.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/test/common.py
++++ b/test/common.py
+@@ -1069,7 +1069,7 @@
+         if node_version < (15, 0, 0):
+           # Opt in to node v15 default behaviour:
+           # https://nodejs.org/api/cli.html#cli_unhandled_rejections_mode
+-          self.node_args.append('--unhandled-rejections=throw')
++          self.node_args.append('--unhandled-rejections=strict')
+ 
+       # If the version we are running tests in is lower than the version that
+       # emcc targets then we need to tell emcc to target that older version.

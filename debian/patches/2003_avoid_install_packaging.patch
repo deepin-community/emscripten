@@ -4,7 +4,9 @@ Description: avoid install packaging files
 Author: Jonas Smedegaard <dr@jones.dk>
 Last-Update: 2020-10-05
 ---
-This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+ tools/install.py | 41 +++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 39 insertions(+), 2 deletions(-)
+
 --- a/tools/install.py
 +++ b/tools/install.py
 @@ -17,6 +17,10 @@
@@ -12,16 +14,16 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  import sys
  
 +INCLUDES = '''
-+tests/hello_world.c
++test/hello_world.c
 +'''
 +
  EXCLUDES = [os.path.normpath(x) for x in '''
- tests/third_party
- site
-@@ -25,10 +29,43 @@
- .git
+ test/third_party
+ tools/maint
+@@ -27,10 +31,31 @@
  cache
  cache.lock
+ bootstrap.py
 +.circleci
 +.github
 +.pc
@@ -33,18 +35,6 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 +docs/packaging.md
 +docs/paper.tex
 +docs/process.md
-+emar
-+embuilder
-+emcc
-+emcmake
-+em-config
-+emconfigure
-+emmake
-+em++
-+emranlib
-+emrun
-+emscons
-+emsize
 +emscripten-version.txt.orig
 +LICENSE
 +package.json
@@ -52,7 +42,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 +README.md
 +requirements-dev.txt
 +third_party/websockify
-+tests
++test
 +Xtypes
  '''.split()]
  
@@ -62,7 +52,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  .*
  __pycache__
  '''.split()
-@@ -59,7 +96,7 @@
+@@ -61,7 +98,7 @@
          remove_dirs.append(d)
          continue
        fulldir = os.path.normpath(os.path.join(root, d))
@@ -71,7 +61,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
          remove_dirs.append(d)
          continue
        os.makedirs(os.path.join(target, fulldir))
-@@ -74,7 +111,7 @@
+@@ -76,7 +113,7 @@
          logger.debug('skipping file: ' + os.path.join(root, f))
          continue
        full = os.path.normpath(os.path.join(root, f))

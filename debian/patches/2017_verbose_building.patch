@@ -1,0 +1,16 @@
+Description: Make the install script more verbose during builds
+Author: Julian Gilbey <jdg@debian.org>
+Forwarded: not-needed
+Last-Update: 2024-09-22
+
+--- a/Makefile
++++ b/Makefile
+@@ -6,7 +6,7 @@
+ 
+ install:
+ 	@rm -rf $(DESTDIR)
+-	./tools/install.py $(DESTDIR)
++	./tools/install.py --verbose $(DESTDIR)
+ 
+ # Create an distributable archive of emscripten suitable for use
+ # by end users. This archive excludes node_modules as it can include native
