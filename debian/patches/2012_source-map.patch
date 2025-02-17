@@ -6,20 +6,24 @@ Description: use older NodeJS module source-map
 Author: Jonas Smedegaard <dr@jones.dk>
 Last-Update: 2022-01-31
 ---
-This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+ package.json           |  2 +-
+ test/sourcemap2json.js | 13 ++++++-------
+ test/test_core.py      |  3 ++-
+ 3 files changed, 9 insertions(+), 9 deletions(-)
+
 --- a/package.json
 +++ b/package.json
-@@ -4,7 +4,7 @@
-     "es-check": "^6.1.1",
-     "eslint": "^8.6.0",
-     "eslint-config-google": "^0.14.0",
--    "source-map": "0.7.3",
-+    "source-map": "0.5.7",
-     "ws": "~0.4.28"
-   },
-   "dependencies": {
---- a/tests/sourcemap2json.js
-+++ b/tests/sourcemap2json.js
+@@ -8,7 +8,7 @@
+     "eslint-config-prettier": "^9.1.0",
+     "globals": "^15.9.0",
+     "prettier": "^3.3.3",
+-    "source-map": "0.7.4",
++    "source-map": "0.6.1",
+     "typescript": "^5.5.4",
+     "webpack": "^5.94.0",
+     "webpack-cli": "^5.1.4",
+--- a/test/sourcemap2json.js
++++ b/test/sourcemap2json.js
 @@ -12,12 +12,11 @@
  var SourceMapConsumer = require('source-map').SourceMapConsumer;
  var fs = require('fs');
@@ -39,15 +43,15 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  });
 +
 +console.log(JSON.stringify(mappings));
---- a/tests/test_core.py
-+++ b/tests/test_core.py
-@@ -7327,7 +7327,8 @@
+--- a/test/test_core.py
++++ b/test/test_core.py
+@@ -7773,7 +7773,8 @@
  
      self.emcc(os.path.abspath('src.cpp'),
                self.get_emcc_args(),
 -              out_filename)
 +              out_filename,
 +              stderr=PIPE)
-     map_referent = out_filename if not self.is_wasm() else wasm_filename
+     map_referent = out_filename if self.is_wasm2js() else wasm_filename
      # after removing the @line and @sourceMappingURL comments, the build
      # result should be identical to the non-source-mapped debug version.

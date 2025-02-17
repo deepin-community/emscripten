@@ -2,15 +2,17 @@ Description: use newer binaryen
 Author: Jonas Smedegaard <dr@jones.dk>
 Last-Update: 2021-09-14
 ---
-This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+ tools/building.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
 --- a/tools/building.py
 +++ b/tools/building.py
 @@ -39,7 +39,7 @@
+ 
  #  Building
  binaryen_checked = False
+-EXPECTED_BINARYEN_VERSION = 119
++EXPECTED_BINARYEN_VERSION = 120
  
--EXPECTED_BINARYEN_VERSION = 104
-+EXPECTED_BINARYEN_VERSION = 105
- # cache results of nm - it can be slow to run
- nm_cache = {}
- # Stores the object files contained in different archive files passed as input
+ _is_ar_cache: Dict[str, bool] = {}
+ # the exports the user requested

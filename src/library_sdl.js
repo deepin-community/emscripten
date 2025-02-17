@@ -6,8 +6,8 @@
 
 //"use strict";
 
-// See browser tests for examples (tests/runner.py, search for sdl_). Run with
-//    tests/runner browser
+// See browser tests for examples (test/runner.py, search for sdl_). Run with
+//    test/runner browser
 
 // Notes:
 //  SDL_VIDEORESIZE: This is sent when the canvas is resized. Note that the user
@@ -16,35 +16,31 @@
 //                   or otherwise).
 
 var LibrarySDL = {
-  $SDL_unicode__docs: '/** @suppress{missingProperties} */',
-  $SDL_unicode: function() { return SDL.unicode; },
-
-  $SDL_ttfContext__docs: '/** @suppress{missingProperties} */',
-  $SDL_ttfContext: function() { return SDL.ttfContext; },
-
-  $SDL_audio__docs: '/** @suppress{missingProperties} */',
-  $SDL_audio: function() { return SDL.audio; },
-
   $SDL__deps: [
-#if FILESYSTEM
-    '$FS',
-#endif
     '$PATH', '$Browser', 'SDL_GetTicks', 'SDL_LockSurface',
-    '$SDL_unicode', '$SDL_ttfContext', '$SDL_audio'
+    '$MainLoop',
+    // For makeCEvent().
+    '$intArrayFromString',
+    // Many SDL functions depend on malloc/free
+    'malloc', 'free',
   ],
   $SDL: {
     defaults: {
       width: 320,
       height: 200,
-      // If true, SDL_LockSurface will copy the contents of each surface back to the Emscripten HEAP so that C code can access it. If false,
-      // the surface contents are captured only back to JS code.
+      // If true, SDL_LockSurface will copy the contents of each surface back to
+      // the Emscripten HEAP so that C code can access it. If false, the surface
+      // contents are captured only back to JS code.
       copyOnLock: true,
-      // If true, SDL_LockSurface will discard the contents of each surface when SDL_LockSurface() is called. This greatly improves performance
-      // of SDL_LockSurface(). If discardOnLock is true, copyOnLock is ignored.
+      // If true, SDL_LockSurface will discard the contents of each surface when
+      // SDL_LockSurface() is called. This greatly improves performance of
+      // SDL_LockSurface(). If discardOnLock is true, copyOnLock is ignored.
       discardOnLock: false,
-      // If true, emulate compatibility with desktop SDL by ignoring alpha on the screen frontbuffer canvas. Setting this to false will improve
-      // performance considerably and enables alpha-blending on the frontbuffer, so be sure to properly write 0xFF alpha for opaque pixels
-      // if you set this to false!
+      // If true, emulate compatibility with desktop SDL by ignoring alpha on
+      // the screen frontbuffer canvas. Setting this to false will improve
+      // performance considerably and enables alpha-blending on the frontbuffer,
+      // so be sure to properly write 0xFF alpha for opaque pixels if you set
+      // this to false!
       opaqueFrontBuffer: true
     },
 
@@ -65,13 +61,16 @@ var LibrarySDL = {
       volume: 1.0
     },
     mixerFrequency: 22050,
-    mixerFormat: {{{ cDefine('AUDIO_S16LSB') }}},
+    mixerFormat: {{{ cDefs.AUDIO_S16LSB }}},
     mixerNumChannels: 2,
     mixerChunkSize: 1024,
     channelMinimumNumber: 0,
 
-    GL: false, // Set to true if we call SDL_SetVideoMode with SDL_OPENGL, and if so, we do not create 2D canvases&contexts for blitting
-               // Note that images loaded before SDL_SetVideoMode will not get this optimization
+    // Set to true if we call SDL_SetVideoMode with SDL_OPENGL, and if so, we do
+    // not create 2D canvases&contexts for blitting
+    // Note that images loaded before SDL_SetVideoMode will not get this
+    // optimization
+    GL: false,
 
     // all possible GL attributes, with their default value
     glAttributes: {
@@ -103,6 +102,9 @@ var LibrarySDL = {
     isRequestingFullscreen: false,
 
     textInput: false,
+    unicode: false,
+    ttfContext: null,
+    audio: null,
 
     startTime: null,
     initFlags: 0, // The flags passed to SDL_Init
@@ -118,8 +120,12 @@ var LibrarySDL = {
     eventHandlerContext: null,
     eventHandlerTemp: 0,
 
-    keyCodes: { // DOM code ==> SDL code. See https://developer.mozilla.org/en/Document_Object_Model_%28DOM%29/KeyboardEvent and SDL_keycode.h
-      // For keys that don't have unicode value, we map DOM codes with the corresponding scan codes + 1024 (using "| 1 << 10")
+    // DOM code ==> SDL code. See
+    // https://developer.mozilla.org/en/Document_Object_Model_%28DOM%29/KeyboardEvent
+    // and SDL_keycode.h
+    // For keys that don't have unicode value, we map DOM codes with the
+    // corresponding scan codes + 1024 (using "| 1 << 10")
+    keyCodes: {
       16: 225 | 1<<10, // shift
       17: 224 | 1<<10, // control (right, or left)
       18: 226 | 1<<10, // alt
@@ -283,23 +289,23 @@ var LibrarySDL = {
 
       316: 70, // print screen
     },
-    loadRect: function(rect) {
+    loadRect(rect) {
       return {
-        x: {{{ makeGetValue('rect + ' + C_STRUCTS.SDL_Rect.x, '0', 'i32') }}},
-        y: {{{ makeGetValue('rect + ' + C_STRUCTS.SDL_Rect.y, '0', 'i32') }}},
-        w: {{{ makeGetValue('rect + ' + C_STRUCTS.SDL_Rect.w, '0', 'i32') }}},
-        h: {{{ makeGetValue('rect + ' + C_STRUCTS.SDL_Rect.h, '0', 'i32') }}}
+        x: {{{ makeGetValue('rect', C_STRUCTS.SDL_Rect.x, 'i32') }}},
+        y: {{{ makeGetValue('rect', C_STRUCTS.SDL_Rect.y, 'i32') }}},
+        w: {{{ makeGetValue('rect', C_STRUCTS.SDL_Rect.w, 'i32') }}},
+        h: {{{ makeGetValue('rect', C_STRUCTS.SDL_Rect.h, 'i32') }}}
       };
     },
 
-    updateRect: function(rect, r) {
+    updateRect(rect, r) {
       {{{ makeSetValue('rect', C_STRUCTS.SDL_Rect.x, 'r.x', 'i32') }}};
       {{{ makeSetValue('rect', C_STRUCTS.SDL_Rect.y, 'r.y', 'i32') }}};
       {{{ makeSetValue('rect', C_STRUCTS.SDL_Rect.w, 'r.w', 'i32') }}};
       {{{ makeSetValue('rect', C_STRUCTS.SDL_Rect.h, 'r.h', 'i32') }}};
     },
 
-    intersectionOfRects: function(first, second) {
+    intersectionOfRects(first, second) {
       var leftX = Math.max(first.x, second.x);
       var leftY = Math.max(first.y, second.y);
       var rightX = Math.min(first.x + first.w, second.x + second.w);
@@ -313,40 +319,35 @@ var LibrarySDL = {
       }
     },
 
-    checkPixelFormat: function(fmt) {
+    checkPixelFormat(fmt) {
 #if ASSERTIONS
       // Canvas screens are always RGBA.
       var format = {{{ makeGetValue('fmt', C_STRUCTS.SDL_PixelFormat.format, 'i32') }}};
-      if (format != {{{ cDefine('SDL_PIXELFORMAT_RGBA8888') }}}) {
+      if (format != {{{ cDefs.SDL_PIXELFORMAT_RGBA8888 }}}) {
         warnOnce('Unsupported pixel format!');
       }
 #endif
     },
 
     // Load SDL color into a CSS-style color specification
-    loadColorToCSSRGB: function(color) {
-      var rgba = {{{ makeGetValue('color', '0', 'i32') }}};
+    loadColorToCSSRGB(color) {
+      var rgba = {{{ makeGetValue('color', 0, 'i32') }}};
       return 'rgb(' + (rgba&255) + ',' + ((rgba >> 8)&255) + ',' + ((rgba >> 16)&255) + ')';
     },
-    loadColorToCSSRGBA: function(color) {
-      var rgba = {{{ makeGetValue('color', '0', 'i32') }}};
+    loadColorToCSSRGBA(color) {
+      var rgba = {{{ makeGetValue('color', 0, 'i32') }}};
       return 'rgba(' + (rgba&255) + ',' + ((rgba >> 8)&255) + ',' + ((rgba >> 16)&255) + ',' + (((rgba >> 24)&255)/255) + ')';
     },
 
-    translateColorToCSSRGBA: function(rgba) {
-      return 'rgba(' + (rgba&0xff) + ',' + (rgba>>8 & 0xff) + ',' + (rgba>>16 & 0xff) + ',' + (rgba>>>24)/0xff + ')';
-    },
+    translateColorToCSSRGBA: (rgba) =>
+      'rgba(' + (rgba&0xff) + ',' + (rgba>>8 & 0xff) + ',' + (rgba>>16 & 0xff) + ',' + (rgba>>>24)/0xff + ')',
 
-    translateRGBAToCSSRGBA: function(r, g, b, a) {
-      return 'rgba(' + (r&0xff) + ',' + (g&0xff) + ',' + (b&0xff) + ',' + (a&0xff)/255 + ')';
-    },
+    translateRGBAToCSSRGBA: (r, g, b, a) =>
+      'rgba(' + (r&0xff) + ',' + (g&0xff) + ',' + (b&0xff) + ',' + (a&0xff)/255 + ')',
 
-    translateRGBAToColor: function(r, g, b, a) {
-      return r | g << 8 | b << 16 | a << 24;
-    },
+    translateRGBAToColor: (r, g, b, a) => r | g << 8 | b << 16 | a << 24,
 
-    makeSurface: function(width, height, flags, usePageCanvas, source, rmask, gmask, bmask, amask) {
-      flags = flags || 0;
+    makeSurface(width, height, flags, usePageCanvas, source, rmask, gmask, bmask, amask) {
       var is_SDL_HWSURFACE = flags & 0x00000001;
       var is_SDL_HWPALETTE = flags & 0x00200000;
       var is_SDL_OPENGL = flags & 0x04000000;
@@ -364,12 +365,12 @@ var LibrarySDL = {
       }
 
       {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.flags, 'flags', 'i32') }}};
-      {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.format, 'pixelFormat', 'void*') }}};
+      {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.format, 'pixelFormat', POINTER_TYPE) }}};
       {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.w, 'width', 'i32') }}};
       {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.h, 'height', 'i32') }}};
       {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.pitch, 'width * bpp', 'i32') }}};  // assuming RGBA or indexed for now,
                                                                                         // since that is what ImageData gives us in browsers
-      {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.pixels, 'buffer', 'void*') }}};
+      {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.pixels, 'buffer', POINTER_TYPE) }}};
 
       {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.clip_rect+C_STRUCTS.SDL_Rect.x, '0', 'i32') }}};
       {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.clip_rect+C_STRUCTS.SDL_Rect.y, '0', 'i32') }}};
@@ -378,7 +379,7 @@ var LibrarySDL = {
 
       {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.refcount, '1', 'i32') }}};
 
-      {{{ makeSetValue('pixelFormat', C_STRUCTS.SDL_PixelFormat.format, cDefine('SDL_PIXELFORMAT_RGBA8888'), 'i32') }}};
+      {{{ makeSetValue('pixelFormat', C_STRUCTS.SDL_PixelFormat.format, cDefs.SDL_PIXELFORMAT_RGBA8888, 'i32') }}};
       {{{ makeSetValue('pixelFormat', C_STRUCTS.SDL_PixelFormat.palette, '0', 'i32') }}};// TODO
       {{{ makeSetValue('pixelFormat', C_STRUCTS.SDL_PixelFormat.BitsPerPixel, 'bpp * 8', 'i8') }}};
       {{{ makeSetValue('pixelFormat', C_STRUCTS.SDL_PixelFormat.BytesPerPixel, 'bpp', 'i8') }}};
@@ -417,22 +418,20 @@ var LibrarySDL = {
       var ctx = Browser.createContext(canvas, is_SDL_OPENGL, usePageCanvas, webGLContextAttributes);
 
       SDL.surfaces[surf] = {
-        width: width,
-        height: height,
-        canvas: canvas,
-        ctx: ctx,
-        surf: surf,
-        buffer: buffer,
-        pixelFormat: pixelFormat,
+        width,
+        height,
+        canvas,
+        ctx,
+        surf,
+        buffer,
+        pixelFormat,
         alpha: 255,
-        flags: flags,
+        flags,
         locked: 0,
-        usePageCanvas: usePageCanvas,
-        source: source,
+        usePageCanvas,
+        source,
 
-        isFlagSet: function(flag) {
-          return flags & flag;
-        }
+        isFlagSet: (flag) => flags & flag
       };
 
       return surf;
@@ -440,9 +439,9 @@ var LibrarySDL = {
 
     // Copy data from the C++-accessible storage to the canvas backing
     // for surface with HWPALETTE flag(8bpp depth)
-    copyIndexedColorData: function(surfData, rX, rY, rW, rH) {
+    copyIndexedColorData(surfData, rX, rY, rW, rH) {
       // HWPALETTE works with palette
-      // setted by SDL_SetColors
+      // set by SDL_SetColors
       if (!surfData.colors) {
         return;
       }
@@ -467,16 +466,16 @@ var LibrarySDL = {
       for (var y = startY; y < endY; ++y) {
         var base = y * fullWidth;
         for (var x = startX; x < endX; ++x) {
-          data32[base + x] = colors32[{{{ makeGetValue('buffer + base + x', '0', 'i8', null, true) }}}];
+          data32[base + x] = colors32[{{{ makeGetValue('buffer', 'base + x', 'u8') }}}];
         }
       }
     },
 
-    freeSurface: function(surf) {
+    freeSurface(surf) {
       var refcountPointer = surf + {{{ C_STRUCTS.SDL_Surface.refcount }}};
-      var refcount = {{{ makeGetValue('refcountPointer', '0', 'i32') }}};
+      var refcount = {{{ makeGetValue('refcountPointer', 0, 'i32') }}};
       if (refcount > 1) {
-        {{{ makeSetValue('refcountPointer', '0', 'refcount - 1', 'i32') }}};
+        {{{ makeSetValue('refcountPointer', 0, 'refcount - 1', 'i32') }}};
         return;
       }
 
@@ -491,7 +490,8 @@ var LibrarySDL = {
         SDL.screen = null;
       }
     },
-    blitSurface: function(src, srcrect, dst, dstrect, scale) {
+
+    blitSurface(src, srcrect, dst, dstrect, scale) {
       var srcData = SDL.surfaces[src];
       var dstData = SDL.surfaces[dst];
       var sr, dr;
@@ -550,7 +550,7 @@ var LibrarySDL = {
     downFingers: {},
     savedKeydown: null,
 
-    receiveEvent: function(event) {
+    receiveEvent(event) {
       function unpressAllPressedKeys() {
         // Un-press all pressed keys: TODO
         for (var code in SDL.keyboardMap) {
@@ -602,7 +602,7 @@ var LibrarySDL = {
             var touch = touches[i];
             SDL.events.push({
               type: event.type,
-              touch: touch
+              touch
             });
           };
           break;
@@ -632,23 +632,30 @@ var LibrarySDL = {
             var touch = event.changedTouches[i];
             SDL.events.push({
               type: 'touchend',
-              touch: touch
+              touch
             });
           };
           break;
         }
         case 'DOMMouseScroll': case 'mousewheel': case 'wheel':
-          var delta = -Browser.getMouseWheelDelta(event); // Flip the wheel direction to translate from browser wheel direction (+:down) to SDL direction (+:up)
-          delta = (delta == 0) ? 0 : (delta > 0 ? Math.max(delta, 1) : Math.min(delta, -1)); // Quantize to integer so that minimum scroll is at least +/- 1.
+          // Flip the wheel direction to translate from browser wheel direction
+          // (+:down) to SDL direction (+:up)
+          var delta = -Browser.getMouseWheelDelta(event);
+          // Quantize to integer so that minimum scroll is at least +/- 1.
+          delta = (delta == 0) ? 0 : (delta > 0 ? Math.max(delta, 1) : Math.min(delta, -1));
 
           // Simulate old-style SDL events representing mouse wheel input as buttons
-          var button = delta > 0 ? 3 /*SDL_BUTTON_WHEELUP-1*/ : 4 /*SDL_BUTTON_WHEELDOWN-1*/; // Subtract one since JS->C marshalling is defined to add one back.
-          SDL.events.push({ type: 'mousedown', button: button, pageX: event.pageX, pageY: event.pageY });
-          SDL.events.push({ type: 'mouseup', button: button, pageX: event.pageX, pageY: event.pageY });
+          // Subtract one since JS->C marshalling is defined to add one back.
+          var button = delta > 0 ? 3 /*SDL_BUTTON_WHEELUP-1*/ : 4 /*SDL_BUTTON_WHEELDOWN-1*/;
+          SDL.events.push({ type: 'mousedown', button, pageX: event.pageX, pageY: event.pageY });
+          SDL.events.push({ type: 'mouseup', button, pageX: event.pageX, pageY: event.pageY });
 
           // Pass a delta motion event.
           SDL.events.push({ type: 'wheel', deltaX: 0, deltaY: delta });
-          event.preventDefault(); // If we don't prevent this, then 'wheel' event will be sent again by the browser as 'DOMMouseScroll' and we will receive this same event the second time.
+          // If we don't prevent this, then 'wheel' event will be sent again by
+          // the browser as 'DOMMouseScroll' and we will receive this same event
+          // the second time.
+          event.preventDefault();
           break;
         case 'mousemove':
           if (SDL.DOMButtons[0] === 1) {
@@ -656,7 +663,7 @@ var LibrarySDL = {
               type: 'touchmove',
               touch: {
                 identifier: 0,
-                deviceID: {{{ cDefine('SDL_TOUCH_MOUSEID') }}},
+                deviceID: {{{ cDefs.SDL_TOUCH_MOUSEID }}},
                 pageX: event.pageX,
                 pageY: event.pageY
               }
@@ -682,7 +689,7 @@ var LibrarySDL = {
           // won't fire. However, it's fine (and in some cases necessary) to
           // preventDefault for keys that don't generate a character. Otherwise,
           // preventDefault is the right thing to do in general.
-          if (event.type !== 'keydown' || (!SDL_unicode() && !SDL.textInput) || (event.keyCode === 8 /* backspace */ || event.keyCode === 9 /* tab */)) {
+          if (event.type !== 'keydown' || (!SDL.unicode && !SDL.textInput) || (event.keyCode === 8 /* backspace */ || event.keyCode === 9 /* tab */)) {
             event.preventDefault();
           }
 
@@ -692,7 +699,7 @@ var LibrarySDL = {
               type: 'touchstart',
               touch: {
                 identifier: 0,
-                deviceID: {{{ cDefine('SDL_TOUCH_MOUSEID') }}},
+                deviceID: {{{ cDefs.SDL_TOUCH_MOUSEID }}},
                 pageX: event.pageX,
                 pageY: event.pageY
               }
@@ -708,7 +715,7 @@ var LibrarySDL = {
               type: 'touchend',
               touch: {
                 identifier: 0,
-                deviceID: {{{ cDefine('SDL_TOUCH_MOUSEID') }}},
+                deviceID: {{{ cDefs.SDL_TOUCH_MOUSEID }}},
                 pageX: event.pageX,
                 pageY: event.pageY
               }
@@ -783,10 +790,10 @@ var LibrarySDL = {
           event.preventDefault();
           break;
         case 'unload':
-          if (Browser.mainLoop.runner) {
+          if (MainLoop.runner) {
             SDL.events.push(event);
             // Force-run a main event loop, since otherwise this event will never be caught!
-            Browser.mainLoop.runner();
+            MainLoop.runner();
           }
           return;
         case 'resize':
@@ -807,22 +814,22 @@ var LibrarySDL = {
       return;
     },
 
-    lookupKeyCodeForEvent: function(event) {
-        var code = event.keyCode;
-        if (code >= 65 && code <= 90) {
-          code += 32; // make lowercase for SDL
-        } else {
-          code = SDL.keyCodes[event.keyCode] || event.keyCode;
-          // If this is one of the modifier keys (224 | 1<<10 - 227 | 1<<10), and the event specifies that it is
-          // a right key, add 4 to get the right key SDL key code.
-          if (event.location === 2 /*KeyboardEvent.DOM_KEY_LOCATION_RIGHT*/ && code >= (224 | 1<<10) && code <= (227 | 1<<10)) {
-            code += 4;
-          }
+    lookupKeyCodeForEvent(event) {
+      var code = event.keyCode;
+      if (code >= 65 && code <= 90) {
+        code += 32; // make lowercase for SDL
+      } else {
+        code = SDL.keyCodes[event.keyCode] || event.keyCode;
+        // If this is one of the modifier keys (224 | 1<<10 - 227 | 1<<10), and the event specifies that it is
+        // a right key, add 4 to get the right key SDL key code.
+        if (event.location === 2 /*KeyboardEvent.DOM_KEY_LOCATION_RIGHT*/ && code >= (224 | 1<<10) && code <= (227 | 1<<10)) {
+          code += 4;
         }
-        return code;
+      }
+      return code;
     },
 
-    handleEvent: function(event) {
+    handleEvent(event) {
       if (event.handled) return;
       event.handled = true;
 
@@ -873,15 +880,15 @@ var LibrarySDL = {
       }
     },
 
-    flushEventsToHandler: function() {
+    flushEventsToHandler() {
       if (!SDL.eventHandler) return;
 
       while (SDL.pollEvent(SDL.eventHandlerTemp)) {
-        {{{ makeDynCall('iii', 'SDL.eventHandler') }}}(SDL.eventHandlerContext, SDL.eventHandlerTemp);
+        {{{ makeDynCall('ipp', 'SDL.eventHandler') }}}(SDL.eventHandlerContext, SDL.eventHandlerTemp);
       }
     },
 
-    pollEvent: function(ptr) {
+    pollEvent(ptr) {
       if (SDL.initFlags & 0x200 && SDL.joystickEventState) {
         // If SDL_INIT_JOYSTICK was supplied AND the joystick system is configured
         // to automatically query for events, query for joystick events.
@@ -892,14 +899,14 @@ var LibrarySDL = {
           if (SDL.makeCEvent(SDL.events.shift(), ptr) !== false) return 1;
         }
         return 0;
-      } else {
-        // XXX: somewhat risky in that we do not check if the event is real or not (makeCEvent returns false) if no pointer supplied
-        return SDL.events.length > 0;
       }
+      // XXX: somewhat risky in that we do not check if the event is real or not
+      // (makeCEvent returns false) if no pointer supplied
+      return SDL.events.length > 0;
     },
 
     // returns false if the event was determined to be irrelevant
-    makeCEvent: function(event, ptr) {
+    makeCEvent(event, ptr) {
       if (typeof event == 'number') {
         // This is a pointer to a copy of a native C event that was SDL_PushEvent'ed
         _memcpy(ptr, event, {{{ C_STRUCTS.SDL_KeyboardEvent.__size__ }}});
@@ -912,7 +919,7 @@ var LibrarySDL = {
       switch (event.type) {
         case 'keydown': case 'keyup': {
           var down = event.type === 'keydown';
-          //out('Received key event: ' + event.keyCode);
+          //dbg('Received key event: ' + event.keyCode);
           var key = SDL.lookupKeyCodeForEvent(event);
           var scan;
           if (key >= 1024) {
@@ -1051,7 +1058,7 @@ var LibrarySDL = {
       }
     },
 
-    makeFontString: function(height, fontName) {
+    makeFontString(height, fontName) {
       if (fontName.charAt(0) != "'" && fontName.charAt(0) != '"') {
         // https://developer.mozilla.org/ru/docs/Web/CSS/font-family
         // Font family names containing whitespace should be quoted.
@@ -1061,10 +1068,10 @@ var LibrarySDL = {
       return height + 'px ' + fontName + ', serif';
     },
 
-    estimateTextWidth: function(fontData, text) {
+    estimateTextWidth(fontData, text) {
       var h = fontData.size;
       var fontString = SDL.makeFontString(h, fontData.name);
-      var tempCtx = SDL_ttfContext();
+      var tempCtx = SDL.ttfContext;
 #if ASSERTIONS
       assert(tempCtx, 'TTF_Init must have been called');
 #endif
@@ -1079,7 +1086,7 @@ var LibrarySDL = {
     // played at the same time.  We don't need to actually implement the mixing
     // since the browser engine handles that for us.  Therefore, in JS we just
     // maintain a list of channels and return IDs for them to the SDL consumer.
-    allocateChannels: function(num) { // called from Mix_AllocateChannels and init
+    allocateChannels(num) { // called from Mix_AllocateChannels and init
       if (SDL.numChannels && SDL.numChannels >= num && num != 0) return;
       SDL.numChannels = num;
       SDL.channels = [];
@@ -1091,7 +1098,7 @@ var LibrarySDL = {
       }
     },
 
-    setGetVolume: function(info, volume) {
+    setGetVolume(info, volume) {
       if (!info) return 0;
       var ret = info.volume * 128; // MIX_MAX_VOLUME
       if (volume != -1) {
@@ -1101,14 +1108,14 @@ var LibrarySDL = {
             info.audio.volume = info.volume; // For <audio> element
             if (info.audio.webAudioGainNode) info.audio.webAudioGainNode['gain']['value'] = info.volume; // For WebAudio playback
           } catch(e) {
-            err('setGetVolume failed to set audio volume: ' + e);
+            err(`setGetVolume failed to set audio volume: ${e}`);
           }
         }
       }
       return ret;
     },
 
-    setPannerPosition: function(info, x, y, z) {
+    setPannerPosition(info, x, y, z) {
       if (!info) return;
       if (info.audio) {
         if (info.audio.webAudioPannerNode) {
@@ -1118,7 +1125,7 @@ var LibrarySDL = {
     },
 
     // Plays out an SDL audio resource that was loaded with the Mix_Load APIs, when using Web Audio..
-    playWebAudio: function(audio) {
+    playWebAudio(audio) {
       if (!audio) return;
       if (audio.webAudioNode) return; // This instance is already playing, don't start again.
       if (!SDL.webAudioAvailable()) return;
@@ -1127,13 +1134,13 @@ var LibrarySDL = {
         audio.paused = false;
         if (!webAudio.decodedBuffer) {
           if (webAudio.onDecodeComplete === undefined) abort("Cannot play back audio object that was not loaded");
-          webAudio.onDecodeComplete.push(function() { if (!audio.paused) SDL.playWebAudio(audio); });
+          webAudio.onDecodeComplete.push(() => { if (!audio.paused) SDL.playWebAudio(audio); });
           return;
         }
         audio.webAudioNode = SDL.audioContext['createBufferSource']();
         audio.webAudioNode['buffer'] = webAudio.decodedBuffer;
         audio.webAudioNode['loop'] = audio.loop;
-        audio.webAudioNode['onended'] = function() { audio['onended'](); } // For <media> element compatibility, route the onended signal to the instance.
+        audio.webAudioNode['onended'] = audio['onended']; // For <media> element compatibility, route the onended signal to the instance.
 
         audio.webAudioPannerNode = SDL.audioContext['createPanner']();
         // avoid Chrome bug
@@ -1153,12 +1160,12 @@ var LibrarySDL = {
         audio.webAudioNode['start'](0, audio.currentPosition);
         audio.startTime = SDL.audioContext['currentTime'] - audio.currentPosition;
       } catch(e) {
-        err('playWebAudio failed: ' + e);
+        err(`playWebAudio failed: ${e}`);
       }
     },
 
     // Pauses an SDL audio resource that was played with Web Audio.
-    pauseWebAudio: function(audio) {
+    pauseWebAudio(audio) {
       if (!audio) return;
       if (audio.webAudioNode) {
         try {
@@ -1171,13 +1178,13 @@ var LibrarySDL = {
           audio.webAudioNode.stop(0); // 0 is a default parameter, but WebKit is confused by it #3861
           audio.webAudioNode = undefined;
         } catch(e) {
-          err('pauseWebAudio failed: ' + e);
+          err(`pauseWebAudio failed: ${e}`);
         }
       }
       audio.paused = true;
     },
 
-    openAudioContext: function() {
+    openAudioContext() {
       // Initialize Web Audio API if we haven't done so yet. Note: Only initialize Web Audio context ever once on the web page,
       // since initializing multiple times fails on Chrome saying 'audio resources have been exhausted'.
       if (!SDL.audioContext) {
@@ -1186,31 +1193,31 @@ var LibrarySDL = {
       }
     },
 
-    webAudioAvailable: function() { return !!SDL.audioContext; },
+    webAudioAvailable: () => !!SDL.audioContext,
 
-    fillWebAudioBufferFromHeap: function(heapPtr, sizeSamplesPerChannel, dstAudioBuffer) {
+    fillWebAudioBufferFromHeap(heapPtr, sizeSamplesPerChannel, dstAudioBuffer) {
       // The input audio data is interleaved across the channels, i.e. [L, R, L, R, L, R, ...] and is either 8-bit, 16-bit or float as
       // supported by the SDL API. The output audio wave data for Web Audio API must be in planar buffers of [-1,1]-normalized Float32 data,
       // so perform a buffer conversion for the data.
-      var audio = SDL_audio();
+      var audio = SDL.audio;
       var numChannels = audio.channels;
       for (var c = 0; c < numChannels; ++c) {
         var channelData = dstAudioBuffer['getChannelData'](c);
         if (channelData.length != sizeSamplesPerChannel) {
           throw 'Web Audio output buffer length mismatch! Destination size: ' + channelData.length + ' samples vs expected ' + sizeSamplesPerChannel + ' samples!';
         }
-        if (audio.format == {{{ cDefine('AUDIO_S16LSB') }}}) {
+        if (audio.format == {{{ cDefs.AUDIO_S16LSB }}}) {
           for (var j = 0; j < sizeSamplesPerChannel; ++j) {
-            channelData[j] = ({{{ makeGetValue('heapPtr', '(j*numChannels + c)*2', 'i16', 0, 0) }}}) / 0x8000;
+            channelData[j] = ({{{ makeGetValue('heapPtr', '(j*numChannels + c)*2', 'i16') }}}) / 0x8000;
           }
-        } else if (audio.format == {{{ cDefine('AUDIO_U8') }}}) {
+        } else if (audio.format == {{{ cDefs.AUDIO_U8 }}}) {
           for (var j = 0; j < sizeSamplesPerChannel; ++j) {
-            var v = ({{{ makeGetValue('heapPtr', 'j*numChannels + c', 'i8', 0, 0) }}});
+            var v = ({{{ makeGetValue('heapPtr', 'j*numChannels + c', 'i8') }}});
             channelData[j] = ((v >= 0) ? v-128 : v+128) /128;
           }
-        } else if (audio.format == {{{ cDefine('AUDIO_F32') }}}) {
+        } else if (audio.format == {{{ cDefs.AUDIO_F32 }}}) {
           for (var j = 0; j < sizeSamplesPerChannel; ++j) {
-            channelData[j] = ({{{ makeGetValue('heapPtr', '(j*numChannels + c)*4', 'float', 0, 0) }}});
+            channelData[j] = ({{{ makeGetValue('heapPtr', '(j*numChannels + c)*4', 'float') }}});
           }
         } else {
           throw 'Invalid SDL audio format ' + audio.format + '!';
@@ -1220,15 +1227,17 @@ var LibrarySDL = {
 
     // Debugging
 
-    debugSurface: function(surfData) {
-      out('dumping surface ' + [surfData.surf, surfData.source, surfData.width, surfData.height]);
+#if ASSERTIONS
+    debugSurface(surfData) {
+      dbg('dumping surface ' + [surfData.surf, surfData.source, surfData.width, surfData.height]);
       var image = surfData.ctx.getImageData(0, 0, surfData.width, surfData.height);
       var data = image.data;
       var num = Math.min(surfData.width, surfData.height);
       for (var i = 0; i < num; i++) {
-        out('   diagonal ' + i + ':' + [data[i*surfData.width*4 + i*4 + 0], data[i*surfData.width*4 + i*4 + 1], data[i*surfData.width*4 + i*4 + 2], data[i*surfData.width*4 + i*4 + 3]]);
+        dbg('   diagonal ' + i + ':' + [data[i*surfData.width*4 + i*4 + 0], data[i*surfData.width*4 + i*4 + 1], data[i*surfData.width*4 + i*4 + 2], data[i*surfData.width*4 + i*4 + 3]]);
       }
     },
+#endif
 
     // Joystick helper methods and state
 
@@ -1237,7 +1246,7 @@ var LibrarySDL = {
     // Maps Joystick names to pointers. Allows us to avoid reallocating memory for
     // joystick names each time this function is called.
     joystickNamePool: {},
-    recordJoystickState: function(joystick, state) {
+    recordJoystickState(joystick, state) {
       // Standardize button state.
       var buttons = new Array(state.buttons.length);
       for (var i = 0; i < state.buttons.length; i++) {
@@ -1245,7 +1254,7 @@ var LibrarySDL = {
       }
 
       SDL.lastJoystickState[joystick] = {
-        buttons: buttons,
+        buttons,
         axes: state.axes.slice(0),
         timestamp: state.timestamp,
         index: state.index,
@@ -1255,19 +1264,18 @@ var LibrarySDL = {
     // Retrieves the button state of the given gamepad button.
     // Abstracts away implementation differences.
     // Returns 'true' if pressed, 'false' otherwise.
-    getJoystickButtonState: function(button) {
+    getJoystickButtonState(button) {
       if (typeof button == 'object') {
         // Current gamepad API editor's draft (Firefox Nightly)
         // https://dvcs.w3.org/hg/gamepad/raw-file/default/gamepad.html#idl-def-GamepadButton
         return button['pressed'];
-      } else {
-        // Current gamepad API working draft (Firefox / Chrome Stable)
-        // http://www.w3.org/TR/2012/WD-gamepad-20120529/#gamepad-interface
-        return button > 0;
       }
+      // Current gamepad API working draft (Firefox / Chrome Stable)
+      // http://www.w3.org/TR/2012/WD-gamepad-20120529/#gamepad-interface
+      return button > 0;
     },
     // Queries for and inserts controller events into the SDL queue.
-    queryJoysticks: function() {
+    queryJoysticks() {
       for (var joystick in SDL.lastJoystickState) {
         var state = SDL.getGamepad(joystick - 1);
         var prevState = SDL.lastJoystickState[joystick];
@@ -1288,7 +1296,7 @@ var LibrarySDL = {
               // Insert button-press event.
               SDL.events.push({
                 type: buttonState ? 'joystick_button_down' : 'joystick_button_up',
-                joystick: joystick,
+                joystick,
                 index: joystick - 1,
                 button: i
               });
@@ -1299,7 +1307,7 @@ var LibrarySDL = {
               // Insert axes-change event.
               SDL.events.push({
                 type: 'joystick_axis_motion',
-                joystick: joystick,
+                joystick,
                 index: joystick - 1,
                 axis: i,
                 value: state.axes[i]
@@ -1313,25 +1321,24 @@ var LibrarySDL = {
     },
     // Converts the double-based browser axis value [-1, 1] into SDL's 16-bit
     // value [-32768, 32767]
-    joystickAxisValueConversion: function(value) {
+    joystickAxisValueConversion(value) {
       // Make sure value is properly clamped
       value = Math.min(1, Math.max(value, -1));
       // Ensures that 0 is 0, 1 is 32767, and -1 is 32768.
       return Math.ceil(((value+1) * 32767.5) - 32768);
     },
 
-    getGamepads: function() {
+    getGamepads() {
       var fcn = navigator.getGamepads || navigator.webkitGamepads || navigator.mozGamepads || navigator.gamepads || navigator.webkitGetGamepads;
       if (fcn !== undefined) {
         // The function must be applied on the navigator object.
         return fcn.apply(navigator);
-      } else {
-        return [];
       }
+      return [];
     },
 
     // Helper function: Returns the gamepad if available, or null if not.
-    getGamepad: function(deviceIndex) {
+    getGamepad(deviceIndex) {
       var gamepads = SDL.getGamepads();
       if (gamepads.length > deviceIndex && deviceIndex >= 0) {
         return gamepads[deviceIndex];
@@ -1341,22 +1348,20 @@ var LibrarySDL = {
   },
 
   SDL_Linked_Version__proxy: 'sync',
-  SDL_Linked_Version__sig: 'i',
-  SDL_Linked_Version: function() {
+  SDL_Linked_Version: () => {
     if (SDL.version === null) {
       SDL.version = _malloc({{{ C_STRUCTS.SDL_version.__size__ }}});
-      {{{ makeSetValue('SDL.version + ' + C_STRUCTS.SDL_version.major, '0', '1', 'i8') }}};
-      {{{ makeSetValue('SDL.version + ' + C_STRUCTS.SDL_version.minor, '0', '3', 'i8') }}};
-      {{{ makeSetValue('SDL.version + ' + C_STRUCTS.SDL_version.patch, '0', '0', 'i8') }}};
+      {{{ makeSetValue('SDL.version', C_STRUCTS.SDL_version.major, '1', 'i8') }}};
+      {{{ makeSetValue('SDL.version', C_STRUCTS.SDL_version.minor, '3', 'i8') }}};
+      {{{ makeSetValue('SDL.version', C_STRUCTS.SDL_version.patch, '0', 'i8') }}};
     }
     return SDL.version;
   },
 
-  SDL_Init__deps: ['$zeroMemory'],
+  SDL_Init__deps: ['calloc', 'memcpy'],
   SDL_Init__proxy: 'sync',
-  SDL_Init__sig: 'ii',
-  SDL_Init__docs: '/** @param{number=} initFlags */', 
-  SDL_Init: function(initFlags) {
+  SDL_Init__docs: '/** @param{number} initFlags */',
+  SDL_Init: (initFlags) => {
     SDL.startTime = Date.now();
     SDL.initFlags = initFlags;
 
@@ -1372,8 +1377,7 @@ var LibrarySDL = {
     }
 
     window.addEventListener("unload", SDL.receiveEvent);
-    SDL.keyboardState = _malloc(0x10000); // Our SDL needs 512, but 64K is safe for older SDLs
-    zeroMemory(SDL.keyboardState, 0x10000);
+    SDL.keyboardState = _calloc(0x10000, 1); // Our SDL needs 512, but 64K is safe for older SDLs
     // Initialize this structure carefully for closure
     SDL.DOMEventToSDLEvent['keydown']    = 0x300  /* SDL_KEYDOWN */;
     SDL.DOMEventToSDLEvent['keyup']      = 0x301  /* SDL_KEYUP */;
@@ -1402,43 +1406,33 @@ var LibrarySDL = {
 
   SDL_WasInit__deps: ['SDL_Init'],
   SDL_WasInit__proxy: 'sync',
-  SDL_WasInit__sig: 'i',
-  SDL_WasInit: function() {
+  SDL_WasInit: (flags) => {
     if (SDL.startTime === null) {
-      _SDL_Init();
+      _SDL_Init(0);
     }
     return 1;
   },
 
-  SDL_GetVideoInfo__deps: ['$zeroMemory'],
+  SDL_GetVideoInfo__deps: ['calloc'],
   SDL_GetVideoInfo__proxy: 'sync',
-  SDL_GetVideoInfo__sig: 'i',
-  SDL_GetVideoInfo: function() {
-    var ret = _malloc({{{ C_STRUCTS.SDL_VideoInfo.__size__ }}});
-    zeroMemory(ret, {{{ C_STRUCTS.SDL_version.__size__ }}});
+  SDL_GetVideoInfo: () => {
+    var ret = _calloc({{{ C_STRUCTS.SDL_VideoInfo.__size__ }}}, 1);
     {{{ makeSetValue('ret', C_STRUCTS.SDL_VideoInfo.current_w, 'Module["canvas"].width', 'i32') }}};
     {{{ makeSetValue('ret', C_STRUCTS.SDL_VideoInfo.current_h, 'Module["canvas"].height', 'i32') }}};
     return ret;
   },
 
-  SDL_ListModes: function(format, flags) {
-    return -1; // -1 == all modes are ok. TODO
-  },
+  // -1 == all modes are ok. TODO
+  SDL_ListModes: (format, flags) => -1,
 
-  SDL_VideoModeOK: function(width, height, depth, flags) {
-    // SDL_VideoModeOK returns 0 if the requested mode is not supported under any bit depth, or returns the
-    // bits-per-pixel of the closest available mode with the given width, height and requested surface flags
-    return depth; // all modes are ok.
-  },
+  // SDL_VideoModeOK returns 0 if the requested mode is not supported under any bit depth, or returns the
+  // bits-per-pixel of the closest available mode with the given width, height and requested surface flags
+  SDL_VideoModeOK: (width, height, depth, flags) => depth, // all modes are ok.
 
-  SDL_AudioDriverName__deps: ['SDL_VideoDriverName'],
-  SDL_AudioDriverName: function(buf, max_size) {
-    return _SDL_VideoDriverName(buf, max_size);
-  },
+  SDL_AudioDriverName: 'SDL_VideoDriverName',
 
   SDL_VideoDriverName__proxy: 'sync',
-  SDL_VideoDriverName__sig: 'iii',
-  SDL_VideoDriverName: function(buf, max_size) {
+  SDL_VideoDriverName: (buf, max_size) => {
     if (SDL.startTime === null) {
       return 0; //return NULL
     }
@@ -1465,11 +1459,12 @@ var LibrarySDL = {
 
   SDL_SetVideoMode__deps: ['$GL'],
   SDL_SetVideoMode__proxy: 'sync',
-  SDL_SetVideoMode__sig: 'iiiii',
-  SDL_SetVideoMode: function(width, height, depth, flags) {
-    ['touchstart', 'touchend', 'touchmove', 'mousedown', 'mouseup', 'mousemove', 'DOMMouseScroll', 'mousewheel', 'wheel', 'mouseout'].forEach(function(event) {
-      Module['canvas'].addEventListener(event, SDL.receiveEvent, true);
-    });
+  SDL_SetVideoMode: (width, height, depth, flags) => {
+    ['touchstart', 'touchend', 'touchmove',
+     'mousedown', 'mouseup', 'mousemove',
+     'mousewheel', 'wheel', 'mouseout',
+     'DOMMouseScroll',
+    ].forEach((e) => Module['canvas'].addEventListener(e, SDL.receiveEvent, true));
 
     var canvas = Module['canvas'];
 
@@ -1481,12 +1476,12 @@ var LibrarySDL = {
 
     if (!SDL.addedResizeListener) {
       SDL.addedResizeListener = true;
-      Browser.resizeListeners.push(function(w, h) {
+      Browser.resizeListeners.push((w, h) => {
         if (!SDL.settingVideoMode) {
           SDL.receiveEvent({
             type: 'resize',
-            w: w,
-            h: h
+            w,
+            h
           });
         }
       });
@@ -1510,14 +1505,10 @@ var LibrarySDL = {
   },
 
   SDL_GetVideoSurface__proxy: 'sync',
-  SDL_GetVideoSurface__sig: 'i',
-  SDL_GetVideoSurface: function() {
-    return SDL.screen;
-  },
+  SDL_GetVideoSurface: () => SDL.screen,
 
   SDL_AudioQuit__proxy: 'sync',
-  SDL_AudioQuit__sig: 'v',
-  SDL_AudioQuit: function() {
+  SDL_AudioQuit: () => {
     for (var i = 0; i < SDL.numChannels; ++i) {
       var chan = /** @type {{ audio: (HTMLMediaElement|undefined) }} */ (SDL.channels[i]);
       if (chan.audio) {
@@ -1526,28 +1517,23 @@ var LibrarySDL = {
       }
     }
     var audio = /** @type {HTMLMediaElement} */ (SDL.music.audio);
-    if (audio) audio.pause();
+    audio?.pause();
     SDL.music.audio = undefined;
   },
 
-  SDL_VideoQuit: function() {
-    out('SDL_VideoQuit called (and ignored)');
-  },
+  SDL_VideoQuit: () => out('SDL_VideoQuit called (and ignored)'),
 
-  SDL_QuitSubSystem: function(flags) {
-    out('SDL_QuitSubSystem called (and ignored)');
-  },
+  SDL_QuitSubSystem: (flags) => out('SDL_QuitSubSystem called (and ignored)'),
 
   SDL_Quit__deps: ['SDL_AudioQuit'],
-  SDL_Quit: function() {
+  SDL_Quit: () => {
     _SDL_AudioQuit();
     out('SDL_Quit called (and ignored)');
   },
 
   // Copy data from the canvas backing to a C++-accessible storage
   SDL_LockSurface__proxy: 'sync',
-  SDL_LockSurface__sig: 'ii',
-  SDL_LockSurface: function(surf) {
+  SDL_LockSurface: (surf) => {
     var surfData = SDL.surfaces[surf];
 
     surfData.locked++;
@@ -1555,14 +1541,14 @@ var LibrarySDL = {
 
     if (!surfData.buffer) {
       surfData.buffer = _malloc(surfData.width * surfData.height * 4);
-      {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.pixels, 'surfData.buffer', 'void*') }}};
+      {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.pixels, 'surfData.buffer', POINTER_TYPE) }}};
     }
 
     // Mark in C/C++-accessible SDL structure
     // SDL_Surface has the following fields: Uint32 flags, SDL_PixelFormat *format; int w, h; Uint16 pitch; void *pixels; ...
     // So we have fields all of the same size, and 5 of them before us.
     // TODO: Use macros like in library.js
-    {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.pixels, 'surfData.buffer', 'void*') }}};
+    {{{ makeSetValue('surf', C_STRUCTS.SDL_Surface.pixels, 'surfData.buffer', POINTER_TYPE) }}};
 
     if (surf == SDL.screen && Module.screenIsReadOnly && surfData.image) return 0;
 
@@ -1588,7 +1574,7 @@ var LibrarySDL = {
     if (SDL.defaults.copyOnLock && !SDL.defaults.discardOnLock) {
       // Copy pixel data to somewhere accessible to 'C/C++'
       if (surfData.isFlagSet(0x00200000 /* SDL_HWPALETTE */)) {
-        // If this is neaded then
+        // If this is needed then
         // we should compact the data from 32bpp to 8bpp index.
         // I think best way to implement this is use
         // additional colorMap hash (color->index).
@@ -1616,8 +1602,7 @@ var LibrarySDL = {
 
   // Copy data from the C++-accessible storage to the canvas backing
   SDL_UnlockSurface__proxy: 'sync',
-  SDL_UnlockSurface__sig: 'vi',
-  SDL_UnlockSurface: function(surf) {
+  SDL_UnlockSurface: (surf) => {
     assert(!SDL.GL); // in GL mode we do not keep around 2D canvases and contexts
 
     var surfData = SDL.surfaces[surf];
@@ -1633,7 +1618,7 @@ var LibrarySDL = {
       var data = surfData.image.data;
       var buffer = surfData.buffer;
       assert(buffer % 4 == 0, 'Invalid buffer offset: ' + buffer);
-      var src = buffer >> 2;
+      var src = {{{ getHeapOffset('buffer', 'i32') }}};
       var dst = 0;
       var isScreen = surf == SDL.screen;
       var num;
@@ -1708,7 +1693,7 @@ var LibrarySDL = {
         var base = y*width*4;
         for (var x = 0; x < width; x++) {
           // See comment above about signs
-          var val = {{{ makeGetValue('s++', '0', 'i8', null, true) }}} * 4;
+          var val = {{{ makeGetValue('s++', 0, 'u8') }}} * 4;
           var start = base + x*4;
           data[start]   = colors[val];
           data[start+1] = colors[val+1];
@@ -1722,21 +1707,21 @@ var LibrarySDL = {
     // Note that we save the image, so future writes are fast. But, memory is not yet released
   },
 
-  SDL_Flip: function(surf) {
+  SDL_Flip: (surf) => {
     // We actually do this in Unlock, since the screen surface has as its canvas
     // backing the page canvas element
   },
 
-  SDL_UpdateRect: function(surf, x, y, w, h) {
+  SDL_UpdateRect: (surf, x, y, w, h) => {
     // We actually do the whole screen in Unlock...
   },
 
-  SDL_UpdateRects: function(surf, numrects, rects) {
+  SDL_UpdateRects: (surf, numrects, rects) => {
     // We actually do the whole screen in Unlock...
   },
 
 #if !ASYNCIFY
-  SDL_Delay: function(delay) {
+  SDL_Delay: (delay) => {
     if (!ENVIRONMENT_IS_WORKER) abort('SDL_Delay called on the main thread! Potential infinite loop, quitting. (consider building with async support like ASYNCIFY)');
     // horrible busy-wait, but in a worker it at least does not block rendering
     var now = Date.now();
@@ -1744,28 +1729,25 @@ var LibrarySDL = {
   },
 #else
   SDL_Delay__deps: ['emscripten_sleep'],
-  SDL_Delay: function(delay) {
-    _emscripten_sleep(delay);
-  },
+  SDL_Delay__async: true,
+  SDL_Delay: (delay) => _emscripten_sleep(delay),
 #endif
 
   SDL_WM_SetCaption__proxy: 'sync',
-  SDL_WM_SetCaption__sig: 'vii',
-  SDL_WM_SetCaption: function(title, icon) {
-    if (title && typeof setWindowTitle != 'undefined') {
-      setWindowTitle(UTF8ToString(title));
+  SDL_WM_SetCaption__deps: ['emscripten_set_window_title'],
+  SDL_WM_SetCaption: (title, icon) => {
+    if (title) {
+      _emscripten_set_window_title(title);
     }
-    icon = icon && UTF8ToString(icon);
+    icon &&= UTF8ToString(icon);
   },
 
-  SDL_EnableKeyRepeat: function(delay, interval) {
-    // TODO
-  },
+  // TODO
+  SDL_EnableKeyRepeat: (delay, interval) => {},
 
   SDL_GetKeyboardState__proxy: 'sync',
-  SDL_GetKeyboardState__sig: 'ii',
-  SDL_GetKeyboardState__docs: '/** @param {number=} numKeys */',
-  SDL_GetKeyboardState: function(numKeys) {
+  SDL_GetKeyboardState__docs: '/** @param {number} numKeys */',
+  SDL_GetKeyboardState: (numKeys) => {
     if (numKeys) {
       {{{ makeSetValue('numKeys', 0, 0x10000, 'i32') }}};
     }
@@ -1773,36 +1755,27 @@ var LibrarySDL = {
   },
 
   SDL_GetKeyState__deps: ['SDL_GetKeyboardState'],
-  SDL_GetKeyState: function() {
-    return _SDL_GetKeyboardState();
-  },
+  SDL_GetKeyState: () => _SDL_GetKeyboardState(0),
 
   SDL_GetKeyName__proxy: 'sync',
-  SDL_GetKeyName__sig: 'ii',
-  SDL_GetKeyName: function(key) {
-    if (!SDL.keyName) {
-      SDL.keyName = allocateUTF8('unknown key');
-    }
+  SDL_GetKeyName__deps: ['$stringToNewUTF8'],
+  SDL_GetKeyName: (key) => {
+    SDL.keyName ||= stringToNewUTF8('unknown key');
     return SDL.keyName;
   },
 
   SDL_GetModState__proxy: 'sync',
-  SDL_GetModState__sig: 'i',
-  SDL_GetModState: function() {
-    return SDL.modState;
-  },
+  SDL_GetModState: () => SDL.modState,
 
   SDL_GetMouseState__proxy: 'sync',
-  SDL_GetMouseState__sig: 'iii',
-  SDL_GetMouseState: function(x, y) {
-    if (x) {{{ makeSetValue('x', '0', 'Browser.mouseX', 'i32') }}};
-    if (y) {{{ makeSetValue('y', '0', 'Browser.mouseY', 'i32') }}};
+  SDL_GetMouseState: (x, y) => {
+    if (x) {{{ makeSetValue('x', 0, 'Browser.mouseX', 'i32') }}};
+    if (y) {{{ makeSetValue('y', 0, 'Browser.mouseY', 'i32') }}};
     return SDL.buttonState;
   },
 
   SDL_WarpMouse__proxy: 'sync',
-  SDL_WarpMouse__sig: 'vii',
-  SDL_WarpMouse: function(x, y) {
+  SDL_WarpMouse: (x, y) => {
     return; // TODO: implement this in a non-buggy way. Need to keep relative mouse movements correct after calling this
     /*
     var rect = Module["canvas"].getBoundingClientRect();
@@ -1815,66 +1788,46 @@ var LibrarySDL = {
   },
 
   SDL_ShowCursor__proxy: 'sync',
-  SDL_ShowCursor__sig: 'ii',
-  SDL_ShowCursor: function(toggle) {
+  SDL_ShowCursor: (toggle) => {
     switch (toggle) {
       case 0: // SDL_DISABLE
         if (Browser.isFullscreen) { // only try to lock the pointer when in full screen mode
           Module['canvas'].requestPointerLock();
           return 0;
-        } else { // else return SDL_ENABLE to indicate the failure
-          return 1;
         }
-        break;
+        // else return SDL_ENABLE to indicate the failure
+        return 1;
       case 1: // SDL_ENABLE
         Module['canvas'].exitPointerLock();
         return 1;
-        break;
       case -1: // SDL_QUERY
         return !Browser.pointerLock;
-        break;
       default:
-        out( "SDL_ShowCursor called with unknown toggle parameter value: " + toggle + "." );
+        err(`SDL_ShowCursor called with unknown toggle parameter value: ${toggle}`);
         break;
     }
   },
 
   SDL_GetError__proxy: 'sync',
-  SDL_GetError__sig: 'i',
-  SDL_GetError: function() {
-    if (!SDL.errorMessage) {
-      SDL.errorMessage = allocateUTF8("unknown SDL-emscripten error");
-    }
+  SDL_GetError__deps: ['$stringToNewUTF8'],
+  SDL_GetError: () => {
+    SDL.errorMessage ||= stringToNewUTF8("unknown SDL-emscripten error");
     return SDL.errorMessage;
   },
 
-  SDL_SetError: function() {},
-
-  SDL_malloc__sig: 'ii',
-  SDL_malloc: function(size) {
-    return _malloc(size);
-  },
-
-  SDL_free__sig: 'vi',
-  SDL_free: function(ptr) {
-    _free(ptr);
-  },
+  SDL_SetError: (fmt, varargs) => {},
 
   SDL_CreateRGBSurface__proxy: 'sync',
-  SDL_CreateRGBSurface__sig: 'iiiiiiiii',
-  SDL_CreateRGBSurface: function(flags, width, height, depth, rmask, gmask, bmask, amask) {
-    return SDL.makeSurface(width, height, flags, false, 'CreateRGBSurface', rmask, gmask, bmask, amask);
-  },
+  SDL_CreateRGBSurface: (flags, width, height, depth, rmask, gmask, bmask, amask) => SDL.makeSurface(width, height, flags, false, 'CreateRGBSurface', rmask, gmask, bmask, amask),
 
   SDL_CreateRGBSurfaceFrom__proxy: 'sync',
-  SDL_CreateRGBSurfaceFrom__sig: 'iiiiiiiiii',
-  SDL_CreateRGBSurfaceFrom: function(pixels, width, height, depth, pitch, rmask, gmask, bmask, amask) {
+  SDL_CreateRGBSurfaceFrom: (pixels, width, height, depth, pitch, rmask, gmask, bmask, amask) => {
     var surf = SDL.makeSurface(width, height, 0, false, 'CreateRGBSurfaceFrom', rmask, gmask, bmask, amask);
 
     if (depth !== 32) {
       // TODO: Actually fill pixel data to created surface.
       // TODO: Take into account depth and pitch parameters.
-      out('TODO: Partially unimplemented SDL_CreateRGBSurfaceFrom called!');
+      err('TODO: Partially unimplemented SDL_CreateRGBSurfaceFrom called!');
       return surf;
     }
 
@@ -1887,7 +1840,7 @@ var LibrarySDL = {
       var baseOfDst = row * pitchOfDst;
 
       for (var col = 0; col < width * 4; ++col) {
-        image.data[baseOfDst + col] = {{{ makeGetValue('pixels', 'baseOfDst + col', 'i8', null, true) }}};
+        image.data[baseOfDst + col] = {{{ makeGetValue('pixels', 'baseOfDst + col', 'u8') }}};
       }
     }
 
@@ -1897,9 +1850,8 @@ var LibrarySDL = {
   },
 
   SDL_ConvertSurface__proxy: 'sync',
-  SDL_ConvertSurface__sig: 'iiii',
-  SDL_ConvertSurface__docs: '/** @param {number=} format @param {number=} flags */',
-  SDL_ConvertSurface: function(surf, format, flags) {
+  SDL_ConvertSurface__docs: '/** @param {number} format @param {number} flags */',
+  SDL_ConvertSurface: (surf, format, flags) => {
     if  (format) {
       SDL.checkPixelFormat(format);
     }
@@ -1915,34 +1867,26 @@ var LibrarySDL = {
   },
 
   SDL_DisplayFormatAlpha__deps: ['SDL_ConvertSurface'],
-  SDL_DisplayFormatAlpha: function(surf) {
-    return _SDL_ConvertSurface(surf);
-  },
+  SDL_DisplayFormatAlpha: (surf) => _SDL_ConvertSurface(surf, 0, 0),
 
   SDL_FreeSurface__proxy: 'sync',
-  SDL_FreeSurface__sig: 'vi',
-  SDL_FreeSurface: function(surf) {
+  SDL_FreeSurface: (surf) => {
     if (surf) SDL.freeSurface(surf);
   },
 
   SDL_UpperBlit__proxy: 'sync',
-  SDL_UpperBlit__sig: 'iiiii',
-  SDL_UpperBlit: function(src, srcrect, dst, dstrect) {
-    return SDL.blitSurface(src, srcrect, dst, dstrect, false);
-  },
+  SDL_UpperBlit: (src, srcrect, dst, dstrect) =>
+    SDL.blitSurface(src, srcrect, dst, dstrect, false),
 
   SDL_UpperBlitScaled__proxy: 'sync',
-  SDL_UpperBlitScaled__sig: 'iiiii',
-  SDL_UpperBlitScaled: function(src, srcrect, dst, dstrect) {
-    return SDL.blitSurface(src, srcrect, dst, dstrect, true);
-  },
+  SDL_UpperBlitScaled: (src, srcrect, dst, dstrect) =>
+    SDL.blitSurface(src, srcrect, dst, dstrect, true),
 
   SDL_LowerBlit: 'SDL_UpperBlit',
   SDL_LowerBlitScaled: 'SDL_UpperBlitScaled',
 
   SDL_GetClipRect__proxy: 'sync',
-  SDL_GetClipRect__sig: 'vii',
-  SDL_GetClipRect: function(surf, rect) {
+  SDL_GetClipRect: (surf, rect) => {
     assert(rect);
 
     var surfData = SDL.surfaces[surf];
@@ -1951,8 +1895,7 @@ var LibrarySDL = {
   },
 
   SDL_SetClipRect__proxy: 'sync',
-  SDL_SetClipRect__sig: 'vii',
-  SDL_SetClipRect: function(surf, rect) {
+  SDL_SetClipRect: (surf, rect) => {
     var surfData = SDL.surfaces[surf];
 
     if (rect) {
@@ -1963,8 +1906,7 @@ var LibrarySDL = {
   },
 
   SDL_FillRect__proxy: 'sync',
-  SDL_FillRect__sig: 'iiii',
-  SDL_FillRect: function(surf, rect, color) {
+  SDL_FillRect: (surf, rect, color) => {
     var surfData = SDL.surfaces[surf];
     assert(!surfData.locked); // but we could unlock and re-lock if we must..
 
@@ -1992,19 +1934,7 @@ var LibrarySDL = {
     return 0;
   },
 
-  SDL_BlitSurface__proxy: 'sync',
-  SDL_BlitSurface__sig: 'iiiii',
-  SDL_BlitSurface: function(src, srcrect, dst, dstrect) {
-    return SDL.blitSurface(src, srcrect, dst, dstrect, false);
-  },
-
-  SDL_BlitScaled__proxy: 'sync',
-  SDL_BlitScaled__sig: 'iiiii',
-  SDL_BlitScaled: function(src, srcrect, dst, dstrect) {
-    return SDL.blitSurface(src, srcrect, dst, dstrect, true);
-  },
-
-  zoomSurface: function(src, x, y, smooth) {
+  zoomSurface: (src, x, y, smooth) => {
     var srcData = SDL.surfaces[src];
     var w = srcData.width * x;
     var h = srcData.height * y;
@@ -2023,7 +1953,7 @@ var LibrarySDL = {
   },
 
   rotozoomSurface__deps: ['zoomSurface'],
-  rotozoomSurface: function(src, angle, zoom, smooth) {
+  rotozoomSurface: (src, angle, zoom, smooth) => {
     if (angle % 360 === 0) {
       return _zoomSurface(src, zoom, zoom, smooth);
     }
@@ -2040,8 +1970,7 @@ var LibrarySDL = {
   },
 
   SDL_SetAlpha__proxy: 'sync',
-  SDL_SetAlpha__sig: 'iiii',
-  SDL_SetAlpha: function(surf, flag, alpha) {
+  SDL_SetAlpha: (surf, flag, alpha) => {
     var surfData = SDL.surfaces[surf];
     surfData.alpha = alpha;
 
@@ -2050,7 +1979,7 @@ var LibrarySDL = {
     }
   },
 
-  SDL_SetColorKey: function(surf, flag, key) {
+  SDL_SetColorKey: (surf, flag, key) => {
     // SetColorKey assigns one color to be rendered as transparent. I don't
     // think the canvas API allows for anything like this, and iterating through
     // each pixel to replace that color seems prohibitively expensive.
@@ -2059,20 +1988,13 @@ var LibrarySDL = {
   },
 
   SDL_GetTicks__proxy: 'sync',
-  SDL_GetTicks__sig: 'i',
-  SDL_GetTicks: function() {
-    return (Date.now() - SDL.startTime)|0;
-  },
+  SDL_GetTicks: () => (Date.now() - SDL.startTime)|0,
 
   SDL_PollEvent__proxy: 'sync',
-  SDL_PollEvent__sig: 'ii',
-  SDL_PollEvent: function(ptr) {
-    return SDL.pollEvent(ptr);
-  },
+  SDL_PollEvent: (ptr) => SDL.pollEvent(ptr),
 
   SDL_PushEvent__proxy: 'sync',
-  SDL_PushEvent__sig: 'ii',
-  SDL_PushEvent: function(ptr) {
+  SDL_PushEvent: (ptr) => {
     var copy = _malloc({{{ C_STRUCTS.SDL_KeyboardEvent.__size__ }}});
     _memcpy(copy, ptr, {{{ C_STRUCTS.SDL_KeyboardEvent.__size__ }}});
     SDL.events.push(copy);
@@ -2080,8 +2002,7 @@ var LibrarySDL = {
   },
 
   SDL_PeepEvents__proxy: 'sync',
-  SDL_PeepEvents__sig: 'iiiiii',
-  SDL_PeepEvents: function(events, requestedEventCount, action, from, to) {
+  SDL_PeepEvents: (events, requestedEventCount, action, from, to) => {
     switch (action) {
       case 2: { // SDL_GETEVENT
         // We only handle 1 event right now
@@ -2112,28 +2033,21 @@ var LibrarySDL = {
   },
 
   SDL_PumpEvents__proxy: 'sync',
-  SDL_PumpEvents__sig: 'v',
-  SDL_PumpEvents: function(){
-    SDL.events.forEach(function(event) {
-      SDL.handleEvent(event);
-    });
-  },
+  SDL_PumpEvents: () => SDL.events.forEach(SDL.handleEvent),
 
   // An Emscripten-specific extension to SDL: Some browser APIs require that they are called from within an event handler function.
   // Allow recording a callback that will be called for each received event.
   emscripten_SDL_SetEventHandler__proxy: 'sync',
-  emscripten_SDL_SetEventHandler__sig: 'vii',
-  emscripten_SDL_SetEventHandler: function(handler, userdata) {
+  emscripten_SDL_SetEventHandler: (handler, userdata) => {
     SDL.eventHandler = handler;
     SDL.eventHandlerContext = userdata;
 
     // All SDLEvents take the same amount of memory
-    if (!SDL.eventHandlerTemp) SDL.eventHandlerTemp = _malloc({{{ C_STRUCTS.SDL_KeyboardEvent.__size__ }}});
+    SDL.eventHandlerTemp ||= _malloc({{{ C_STRUCTS.SDL_KeyboardEvent.__size__ }}});
   },
 
   SDL_SetColors__proxy: 'sync',
-  SDL_SetColors__sig: 'iiiii',
-  SDL_SetColors: function(surf, colors, firstColor, nColors) {
+  SDL_SetColors: (surf, colors, firstColor, nColors) => {
     var surfData = SDL.surfaces[surf];
 
     // we should create colors array
@@ -2148,9 +2062,9 @@ var LibrarySDL = {
 
     for (var i = 0; i < nColors; ++i) {
       var index = (firstColor + i) * 4;
-      surfData.colors[index] = {{{ makeGetValue('colors', 'i*4', 'i8', null, true) }}};
-      surfData.colors[index + 1] = {{{ makeGetValue('colors', 'i*4 + 1', 'i8', null, true) }}};
-      surfData.colors[index + 2] = {{{ makeGetValue('colors', 'i*4 + 2', 'i8', null, true) }}};
+      surfData.colors[index] = {{{ makeGetValue('colors', 'i*4', 'u8') }}};
+      surfData.colors[index + 1] = {{{ makeGetValue('colors', 'i*4 + 1', 'u8') }}};
+      surfData.colors[index + 2] = {{{ makeGetValue('colors', 'i*4 + 2', 'u8') }}};
       surfData.colors[index + 3] = 255; // opaque
     }
 
@@ -2158,64 +2072,58 @@ var LibrarySDL = {
   },
 
   SDL_SetPalette__deps: ['SDL_SetColors'],
-  SDL_SetPalette: function(surf, flags, colors, firstColor, nColors) {
-    return _SDL_SetColors(surf, colors, firstColor, nColors);
-  },
+  SDL_SetPalette: (surf, flags, colors, firstColor, nColors) =>
+    _SDL_SetColors(surf, colors, firstColor, nColors),
 
   SDL_MapRGB__proxy: 'sync',
-  SDL_MapRGB__sig: 'iiiii',
-  SDL_MapRGB: function(fmt, r, g, b) {
+  SDL_MapRGB: (fmt, r, g, b) => {
     SDL.checkPixelFormat(fmt);
     // We assume the machine is little-endian.
     return r&0xff|(g&0xff)<<8|(b&0xff)<<16|0xff000000;
   },
 
   SDL_MapRGBA__proxy: 'sync',
-  SDL_MapRGBA__sig: 'iiiiii',
-  SDL_MapRGBA: function(fmt, r, g, b, a) {
+  SDL_MapRGBA: (fmt, r, g, b, a) => {
     SDL.checkPixelFormat(fmt);
     // We assume the machine is little-endian.
     return r&0xff|(g&0xff)<<8|(b&0xff)<<16|(a&0xff)<<24;
   },
 
   SDL_GetRGB__proxy: 'sync',
-  SDL_GetRGB__sig: 'viiiii',
-  SDL_GetRGB: function(pixel, fmt, r, g, b) {
+  SDL_GetRGB: (pixel, fmt, r, g, b) => {
     SDL.checkPixelFormat(fmt);
     // We assume the machine is little-endian.
     if (r) {
-      {{{ makeSetValue('r', '0', 'pixel&0xff', 'i8') }}};
+      {{{ makeSetValue('r', 0, 'pixel&0xff', 'i8') }}};
     }
     if (g) {
-      {{{ makeSetValue('g', '0', '(pixel>>8)&0xff', 'i8') }}};
+      {{{ makeSetValue('g', 0, '(pixel>>8)&0xff', 'i8') }}};
     }
     if (b) {
-      {{{ makeSetValue('b', '0', '(pixel>>16)&0xff', 'i8') }}};
+      {{{ makeSetValue('b', 0, '(pixel>>16)&0xff', 'i8') }}};
     }
   },
 
   SDL_GetRGBA__proxy: 'sync',
-  SDL_GetRGBA__sig: 'viiiiii',
-  SDL_GetRGBA: function(pixel, fmt, r, g, b, a) {
+  SDL_GetRGBA: (pixel, fmt, r, g, b, a) => {
     SDL.checkPixelFormat(fmt);
     // We assume the machine is little-endian.
     if (r) {
-      {{{ makeSetValue('r', '0', 'pixel&0xff', 'i8') }}};
+      {{{ makeSetValue('r', 0, 'pixel&0xff', 'i8') }}};
     }
     if (g) {
-      {{{ makeSetValue('g', '0', '(pixel>>8)&0xff', 'i8') }}};
+      {{{ makeSetValue('g', 0, '(pixel>>8)&0xff', 'i8') }}};
     }
     if (b) {
-      {{{ makeSetValue('b', '0', '(pixel>>16)&0xff', 'i8') }}};
+      {{{ makeSetValue('b', 0, '(pixel>>16)&0xff', 'i8') }}};
     }
     if (a) {
-      {{{ makeSetValue('a', '0', '(pixel>>24)&0xff', 'i8') }}};
+      {{{ makeSetValue('a', 0, '(pixel>>24)&0xff', 'i8') }}};
     }
   },
 
   SDL_GetAppState__proxy: 'sync',
-  SDL_GetAppState__sig: 'i',
-  SDL_GetAppState: function() {
+  SDL_GetAppState: () => {
     var state = 0;
 
     if (Browser.pointerLock) {
@@ -2229,65 +2137,58 @@ var LibrarySDL = {
     return state;
   },
 
-  SDL_WM_GrabInput: function() {},
+  SDL_WM_GrabInput: () => {},
 
   SDL_WM_ToggleFullScreen__proxy: 'sync',
-  SDL_WM_ToggleFullScreen__sig: 'ii',
-  SDL_WM_ToggleFullScreen: function(surf) {
+  SDL_WM_ToggleFullScreen: (surf) => {
     if (Browser.exitFullscreen()) {
       return 1;
-    } else {
-      if (!SDL.canRequestFullscreen) {
-        return 0;
-      }
-      SDL.isRequestingFullscreen = true;
-      return 1;
     }
+    if (!SDL.canRequestFullscreen) {
+      return 0;
+    }
+    SDL.isRequestingFullscreen = true;
+    return 1;
   },
 
   // SDL_Image
 
-  IMG_Init: function(flags) {
-    return flags; // We support JPG, PNG, TIF because browsers do
-  },
+  // We support JPG, PNG, TIF because browsers do
+  IMG_Init: (flags) => flags,
 
-  IMG_Load_RW__deps: ['SDL_LockSurface', 'SDL_FreeRW', '$PATH_FS'],
+  IMG_Load_RW__deps: ['SDL_LockSurface', 'SDL_FreeRW', '$PATH_FS', '$stackSave', '$stackRestore', '$stringToUTF8OnStack', '$stackAlloc'],
   IMG_Load_RW__proxy: 'sync',
-  IMG_Load_RW__sig: 'iii',
-  IMG_Load_RW: function(rwopsID, freeSrc) {
+  IMG_Load_RW: (rwopsID, freeSrc) => {
+    var sp = stackSave();
     try {
       // stb_image integration support
-      var cleanup = function() {
+      var cleanup = () => {
+        stackRestore(sp);
         if (rwops && freeSrc) _SDL_FreeRW(rwopsID);
       }
-      var addCleanup = function(func) {
+      var addCleanup = (func) => {
         var old = cleanup;
-        cleanup = function added_cleanup() {
+        cleanup = () => {
           old();
           func();
         }
       }
-      var callStbImage = function(func, params) {
-        var x = Module['_malloc']({{{ getNativeTypeSize('i32') }}});
-        var y = Module['_malloc']({{{ getNativeTypeSize('i32') }}});
-        var comp = Module['_malloc']({{{ getNativeTypeSize('i32') }}});
-        addCleanup(function() {
-          Module['_free'](x);
-          Module['_free'](y);
-          Module['_free'](comp);
-          if (data) Module['_stbi_image_free'](data);
-        });
-        var data = Module['_' + func].apply(null, params.concat([x, y, comp, 0]));
+      var callStbImage = (func, params) => {
+        var x = stackAlloc({{{ getNativeTypeSize('i32') }}});
+        var y = stackAlloc({{{ getNativeTypeSize('i32') }}});
+        var comp = stackAlloc({{{ getNativeTypeSize('i32') }}});
+        var data = Module['_' + func](...params, x, y, comp, 0);
         if (!data) return null;
+        addCleanup(() => Module['_stbi_image_free'](data));
         return {
           rawData: true,
-          data: data,
+          data,
           width: {{{ makeGetValue('x', 0, 'i32') }}},
           height: {{{ makeGetValue('y', 0, 'i32') }}},
           size: {{{ makeGetValue('x', 0, 'i32') }}} * {{{ makeGetValue('y', 0, 'i32') }}} * {{{ makeGetValue('comp', 0, 'i32') }}},
           bpp: {{{ makeGetValue('comp', 0, 'i32') }}}
         };
-      }
+      };
 
       var rwops = SDL.rwops[rwopsID];
       if (rwops === undefined) {
@@ -2308,16 +2209,11 @@ var LibrarySDL = {
 
       if (!raw) {
         filename = PATH_FS.resolve(filename);
-        raw = Module["preloadedImages"][filename];
+        raw = preloadedImages[filename];
         if (!raw) {
           if (raw === null) err('Trying to reuse preloaded image, but freePreloadedMediaOnUse is set!');
 #if STB_IMAGE
-          var lengthBytes = lengthBytesUTF8(filename)+1;
-          var name = Module['_malloc'](lengthBytes);
-          stringToUTF8(filename, name, lengthBytes);
-          addCleanup(function() {
-            Module['_free'](name);
-          });
+          var name = stringToUTF8OnStack(filename);
           raw = callStbImage('stbi_load', [name]);
           if (!raw) return 0;
 #else
@@ -2326,7 +2222,7 @@ var LibrarySDL = {
           return 0;
 #endif
         } else if (Module['freePreloadedMediaOnUse']) {
-          Module["preloadedImages"][filename] = null;
+          preloadedImages[filename] = null;
         }
       }
 
@@ -2347,9 +2243,9 @@ var LibrarySDL = {
           var sourcePtr = raw.data;
           var destPtr = 0;
           for (var i = 0; i < pixels; i++) {
-            data[destPtr++] = {{{ makeGetValue('sourcePtr++', 0, 'i8', null, 1) }}};
-            data[destPtr++] = {{{ makeGetValue('sourcePtr++', 0, 'i8', null, 1) }}};
-            data[destPtr++] = {{{ makeGetValue('sourcePtr++', 0, 'i8', null, 1) }}};
+            data[destPtr++] = {{{ makeGetValue('sourcePtr++', 0, 'u8') }}};
+            data[destPtr++] = {{{ makeGetValue('sourcePtr++', 0, 'u8') }}};
+            data[destPtr++] = {{{ makeGetValue('sourcePtr++', 0, 'u8') }}};
             data[destPtr++] = 255;
           }
         } else if (raw.bpp == 2) {
@@ -2359,8 +2255,8 @@ var LibrarySDL = {
           var sourcePtr = raw.data;
           var destPtr = 0;
           for (var i = 0; i < pixels; i++) {
-            var gray = {{{ makeGetValue('sourcePtr++', 0, 'i8', null, 1) }}};
-            var alpha = {{{ makeGetValue('sourcePtr++', 0, 'i8', null, 1) }}};
+            var gray = {{{ makeGetValue('sourcePtr++', 0, 'u8') }}};
+            var alpha = {{{ makeGetValue('sourcePtr++', 0, 'u8') }}};
             data[destPtr++] = gray;
             data[destPtr++] = gray;
             data[destPtr++] = gray;
@@ -2373,14 +2269,14 @@ var LibrarySDL = {
           var sourcePtr = raw.data;
           var destPtr = 0;
           for (var i = 0; i < pixels; i++) {
-            var value = {{{ makeGetValue('sourcePtr++', 0, 'i8', null, 1) }}};
+            var value = {{{ makeGetValue('sourcePtr++', 0, 'u8') }}};
             data[destPtr++] = value;
             data[destPtr++] = value;
             data[destPtr++] = value;
             data[destPtr++] = 255;
           }
         } else {
-          err('cannot handle bpp ' + raw.bpp);
+          err(`cannot handle bpp ${raw.bpp}`);
           return 0;
         }
         surfData.ctx.putImageData(imageData, 0, 0);
@@ -2401,45 +2297,45 @@ var LibrarySDL = {
       cleanup();
     }
   },
-  SDL_LoadBMP: 'IMG_Load',
   SDL_LoadBMP_RW: 'IMG_Load_RW',
 
   IMG_Load__deps: ['IMG_Load_RW', 'SDL_RWFromFile'],
   IMG_Load__proxy: 'sync',
-  IMG_Load__sig: 'ii',
-  IMG_Load: function(filename){
-    var rwops = _SDL_RWFromFile(filename);
+  IMG_Load: (filename) => {
+    var rwops = _SDL_RWFromFile(filename, 0);
     var result = _IMG_Load_RW(rwops, 1);
     return result;
   },
 
-  IMG_Quit: function() {
-    out('IMG_Quit called (and ignored)');
-  },
+  IMG_Quit: () => out('IMG_Quit called (and ignored)'),
 
   // SDL_Audio
 
-  SDL_OpenAudio__deps: ['$autoResumeAudioContext', '$safeSetTimeout'],
+  SDL_OpenAudio__deps: ['$autoResumeAudioContext', '$safeSetTimeout', '$registerPostMainLoop'],
   SDL_OpenAudio__proxy: 'sync',
-  SDL_OpenAudio__sig: 'iii',
-  SDL_OpenAudio: function(desired, obtained) {
+  SDL_OpenAudio__postset: `
+    // Queue new audio data. This is important to be right after the main loop
+    // invocation, so that we will immediately be able to queue the newest
+    // produced audio samples.
+    registerPostMainLoop(() => SDL.audio?.queueNewAudioData?.());`,
+  SDL_OpenAudio: (desired, obtained) => {
     try {
       SDL.audio = {
-        freq: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.freq, 'i32', 0, 1) }}},
-        format: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.format, 'i16', 0, 1) }}},
-        channels: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.channels, 'i8', 0, 1) }}},
-        samples: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.samples, 'i16', 0, 1) }}}, // Samples in the CB buffer per single sound channel.
-        callback: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.callback, 'void*', 0, 1) }}},
-        userdata: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.userdata, 'void*', 0, 1) }}},
+        freq: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.freq, 'u32') }}},
+        format: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.format, 'u16') }}},
+        channels: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.channels, 'u8') }}},
+        samples: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.samples, 'u16') }}}, // Samples in the CB buffer per single sound channel.
+        callback: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.callback, '*') }}},
+        userdata: {{{ makeGetValue('desired', C_STRUCTS.SDL_AudioSpec.userdata, '*') }}},
         paused: true,
         timer: null
       };
       // The .silence field tells the constant sample value that corresponds to the safe un-skewed silence value for the wave data.
-      if (SDL.audio.format == {{{ cDefine('AUDIO_U8') }}}) {
+      if (SDL.audio.format == {{{ cDefs.AUDIO_U8 }}}) {
         SDL.audio.silence = 128; // Audio ranges in [0, 255], so silence is half-way in between.
-      } else if (SDL.audio.format == {{{ cDefine('AUDIO_S16LSB') }}}) {
+      } else if (SDL.audio.format == {{{ cDefs.AUDIO_S16LSB }}}) {
         SDL.audio.silence = 0; // Signed data in range [-32768, 32767], silence is 0.
-      } else if (SDL.audio.format == {{{ cDefine('AUDIO_F32') }}}) {
+      } else if (SDL.audio.format == {{{ cDefs.AUDIO_F32 }}}) {
         SDL.audio.silence = 0.0; // Float data in range [-1.0, 1.0], silence is 0.0
       } else {
         throw 'Invalid SDL audio format ' + SDL.audio.format + '!';
@@ -2459,45 +2355,51 @@ var LibrarySDL = {
       } else if (SDL.audio.freq <= 96000) {
         SDL.audio.freq = 96000;
       } else {
-        throw 'Unsupported sound frequency ' + SDL.audio.freq + '!';
+        throw `Unsupported sound frequency ${SDL.audio.freq}!`;
       }
       if (SDL.audio.channels == 0) {
         SDL.audio.channels = 1; // In SDL both 0 and 1 mean mono.
       } else if (SDL.audio.channels < 0 || SDL.audio.channels > 32) {
-        throw 'Unsupported number of audio channels for SDL audio: ' + SDL.audio.channels + '!';
+        throw `Unsupported number of audio channels for SDL audio: ${SDL.audio.channels}!`;
       } else if (SDL.audio.channels != 1 && SDL.audio.channels != 2) { // Unsure what SDL audio spec supports. Web Audio spec supports up to 32 channels.
-        out('Warning: Using untested number of audio channels ' + SDL.audio.channels);
+        out(`Warning: Using untested number of audio channels ${SDL.audio.channels}`);
       }
       if (SDL.audio.samples < 128 || SDL.audio.samples > 524288 /* arbitrary cap */) {
-        throw 'Unsupported audio callback buffer size ' + SDL.audio.samples + '!';
+        throw `Unsupported audio callback buffer size ${SDL.audio.samples}!`;
       } else if ((SDL.audio.samples & (SDL.audio.samples-1)) != 0) {
-        throw 'Audio callback buffer size ' + SDL.audio.samples + ' must be a power-of-two!';
+        throw `Audio callback buffer size ${SDL.audio.samples} must be a power-of-two!`;
       }
 
       var totalSamples = SDL.audio.samples*SDL.audio.channels;
-      if (SDL.audio.format == {{{ cDefine('AUDIO_U8') }}}) {
+      if (SDL.audio.format == {{{ cDefs.AUDIO_U8 }}}) {
         SDL.audio.bytesPerSample = 1;
-      } else if (SDL.audio.format == {{{ cDefine('AUDIO_S16LSB') }}}) {
+      } else if (SDL.audio.format == {{{ cDefs.AUDIO_S16LSB }}}) {
         SDL.audio.bytesPerSample = 2;
-      } else if (SDL.audio.format == {{{ cDefine('AUDIO_F32') }}}) {
+      } else if (SDL.audio.format == {{{ cDefs.AUDIO_F32 }}}) {
         SDL.audio.bytesPerSample = 4;
       } else {
-        throw 'Invalid SDL audio format ' + SDL.audio.format + '!';
+        throw `Invalid SDL audio format ${SDL.audio.format}!`;
       }
       SDL.audio.bufferSize = totalSamples*SDL.audio.bytesPerSample;
-      SDL.audio.bufferDurationSecs = SDL.audio.bufferSize / SDL.audio.bytesPerSample / SDL.audio.channels / SDL.audio.freq; // Duration of a single queued buffer in seconds.
-      SDL.audio.bufferingDelay = 50 / 1000; // Audio samples are played with a constant delay of this many seconds to account for browser and jitter.
+      // Duration of a single queued buffer in seconds.
+      SDL.audio.bufferDurationSecs = SDL.audio.bufferSize / SDL.audio.bytesPerSample / SDL.audio.channels / SDL.audio.freq;
+      // Audio samples are played with a constant delay of this many seconds to account for browser and jitter.
+      SDL.audio.bufferingDelay = 50 / 1000;
       SDL.audio.buffer = _malloc(SDL.audio.bufferSize);
 
-      // To account for jittering in frametimes, always have multiple audio buffers queued up for the audio output device.
+      // To account for jittering in frametimes, always have multiple audio
+      // buffers queued up for the audio output device.
       // This helps that we won't starve that easily if a frame takes long to complete.
       SDL.audio.numSimultaneouslyQueuedBuffers = Module['SDL_numSimultaneouslyQueuedBuffers'] || 5;
 
-      // Pulls and queues new audio data if appropriate. This function gets "over-called" in both requestAnimationFrames and
-      // setTimeouts to ensure that we get the finest granularity possible and as many chances from the browser to fill
-      // new audio data. This is because setTimeouts alone have very poor granularity for audio streaming purposes, but also
-      // the application might not be using emscripten_set_main_loop to drive the main loop, so we cannot rely on that alone.
-      SDL.audio.queueNewAudioData = function SDL_queueNewAudioData() {
+      // Pulls and queues new audio data if appropriate. This function gets
+      // "over-called" in both requestAnimationFrames and setTimeouts to ensure
+      // that we get the finest granularity possible and as many chances from
+      // the browser to fill new audio data. This is because setTimeouts alone
+      // have very poor granularity for audio streaming purposes, but also the
+      // application might not be using emscripten_set_main_loop to drive the
+      // main loop, so we cannot rely on that alone.
+      SDL.audio.queueNewAudioData = () => {
         if (!SDL.audio) return;
 
         for (var i = 0; i < SDL.audio.numSimultaneouslyQueuedBuffers; ++i) {
@@ -2507,26 +2409,24 @@ var LibrarySDL = {
           if (secsUntilNextPlayStart >= SDL.audio.bufferingDelay + SDL.audio.bufferDurationSecs*SDL.audio.numSimultaneouslyQueuedBuffers) return;
 
           // Ask SDL audio data from the user code.
-          {{{ makeDynCall('viii', 'SDL.audio.callback') }}}(SDL.audio.userdata, SDL.audio.buffer, SDL.audio.bufferSize);
+          {{{ makeDynCall('vppi', 'SDL.audio.callback') }}}(SDL.audio.userdata, SDL.audio.buffer, SDL.audio.bufferSize);
           // And queue it to be played after the currently playing audio stream.
           SDL.audio.pushAudio(SDL.audio.buffer, SDL.audio.bufferSize);
         }
       }
 
 #if ASYNCIFY
-      var sleepCallback = function() {
-        if (SDL.audio && SDL.audio.queueNewAudioData) SDL.audio.queueNewAudioData();
+      var sleepCallback = () => {
+        SDL.audio?.queueNewAudioData?.();
       };
       Asyncify.sleepCallbacks.push(sleepCallback);
-      SDL.audio.callbackRemover = function() {
-        Asyncify.sleepCallbacks = Asyncify.sleepCallbacks.filter(function(callback) {
-          return callback !== sleepCallback;
-        });
+      SDL.audio.callbackRemover = () => {
+        Asyncify.sleepCallbacks = Asyncify.sleepCallbacks.filter((callback) => callback !== sleepCallback);
       }
 #endif
 
       // Create a callback function that will be routinely called to ask more audio data from the user application.
-      SDL.audio.caller = function SDL_audioCaller() {
+      SDL.audio.caller = () => {
         if (!SDL.audio) return;
 
         --SDL.audio.numAudioTimersPending;
@@ -2560,8 +2460,9 @@ var LibrarySDL = {
       autoResumeAudioContext(SDL.audioContext);
       SDL.audio.nextPlayTime = 0; // Time in seconds when the next audio block is due to start.
 
-      // The pushAudio function with a new audio buffer whenever there is new audio data to schedule to be played back on the device.
-      SDL.audio.pushAudio=function(ptr,sizeBytes) {
+      // The pushAudio function with a new audio buffer whenever there is new
+      // audio data to schedule to be played back on the device.
+      SDL.audio.pushAudio = (ptr, sizeBytes) => {
         try {
           if (SDL.audio.paused) return;
 
@@ -2584,7 +2485,7 @@ var LibrarySDL = {
           var curtime = SDL.audioContext['currentTime'];
 #if ASSERTIONS
           if (curtime > SDL.audio.nextPlayTime && SDL.audio.nextPlayTime != 0) {
-            out('warning: Audio callback had starved sending audio by ' + (curtime - SDL.audio.nextPlayTime) + ' seconds.');
+            err(`warning: Audio callback had starved sending audio by ${curtime - SDL.audio.nextPlayTime} seconds`);
           }
 #endif
           // Don't ever start buffer playbacks earlier from current time than a given constant 'SDL.audio.bufferingDelay', since a browser
@@ -2606,7 +2507,7 @@ var LibrarySDL = {
 
           SDL.audio.nextPlayTime = playtime + SDL.audio.bufferDurationSecs;
         } catch(e) {
-          out('Web Audio API error playing back audio: ' + e.toString());
+          err(`Web Audio API error playing back audio: ${e.toString()}`);
         }
       }
 
@@ -2623,7 +2524,7 @@ var LibrarySDL = {
       SDL.allocateChannels(32);
 
     } catch(e) {
-      out('Initializing SDL audio threw an exception: "' + e.toString() + '"! Continuing without audio.');
+      err(`Initializing SDL audio threw an exception: "${e.toString()}"! Continuing without audio`);
       SDL.audio = null;
       SDL.allocateChannels(0);
       if (obtained) {
@@ -2644,8 +2545,7 @@ var LibrarySDL = {
 
   SDL_PauseAudio__proxy: 'sync',
   SDL_PauseAudio__deps: ['$safeSetTimeout'],
-  SDL_PauseAudio__sig: 'vi',
-  SDL_PauseAudio: function(pauseOn) {
+  SDL_PauseAudio: (pauseOn) => {
     if (!SDL.audio) {
       return;
     }
@@ -2665,8 +2565,7 @@ var LibrarySDL = {
 
   SDL_CloseAudio__deps: ['SDL_PauseAudio'],
   SDL_CloseAudio__proxy: 'sync',
-  SDL_CloseAudio__sig: 'v',
-  SDL_CloseAudio: function() {
+  SDL_CloseAudio: () => {
     if (SDL.audio) {
       if (SDL.audio.callbackRemover) {
         SDL.audio.callbackRemover();
@@ -2679,44 +2578,39 @@ var LibrarySDL = {
     }
   },
 
-  SDL_LockAudio: function() {},
-  SDL_UnlockAudio: function() {},
+  SDL_LockAudio: () => {},
+  SDL_UnlockAudio: () => {},
 
-  SDL_CreateMutex: function() { return 0 },
-  SDL_LockMutex: function() {},
-  SDL_UnlockMutex: function() {},
-  SDL_mutexP: function() { return 0 },
-  SDL_mutexV: function() { return 0 },
-  SDL_DestroyMutex: function() {},
+  SDL_CreateMutex: () => 0,
+  SDL_mutexP: (mutex) => 0,
+  SDL_mutexV: (mutex) => 0,
+  SDL_DestroyMutex: (mutex) => {},
 
-  SDL_CreateCond: function() { return 0 },
-  SDL_CondSignal: function() {},
-  SDL_CondWait: function() {},
-  SDL_DestroyCond: function() {},
+  SDL_CreateCond: () => 0,
+  SDL_CondSignal: (cond) => {},
+  SDL_CondWait: (cond, mutex) => {},
+  SDL_DestroyCond: (cond) => {},
 
   SDL_StartTextInput__proxy: 'sync',
-  SDL_StartTextInput__sig: 'v',
-  SDL_StartTextInput: function() {
+  SDL_StartTextInput: () => {
     SDL.textInput = true;
   },
   SDL_StopTextInput__proxy: 'sync',
-  SDL_StopTextInput__sig: 'v',
-  SDL_StopTextInput: function() {
+  SDL_StopTextInput: () => {
     SDL.textInput = false;
   },
 
   // SDL Mixer
 
-  Mix_Init: function(flags) {
+  Mix_Init: (flags) => {
     if (!flags) return 0;
     return 8; /* MIX_INIT_OGG */
   },
-  Mix_Quit: function(){},
+  Mix_Quit: () => {},
 
   Mix_OpenAudio__deps: ['$autoResumeAudioContext'],
   Mix_OpenAudio__proxy: 'sync',
-  Mix_OpenAudio__sig: 'iiiii',
-  Mix_OpenAudio: function(frequency, format, channels, chunksize) {
+  Mix_OpenAudio: (frequency, format, channels, chunksize) => {
     SDL.openAudioContext();
     autoResumeAudioContext(SDL.audioContext);
     SDL.allocateChannels(32);
@@ -2731,21 +2625,18 @@ var LibrarySDL = {
   Mix_CloseAudio: 'SDL_CloseAudio',
 
   Mix_AllocateChannels__proxy: 'sync',
-  Mix_AllocateChannels__sig: 'ii',
-  Mix_AllocateChannels: function(num) {
+  Mix_AllocateChannels: (num) => {
     SDL.allocateChannels(num);
     return num;
   },
 
   Mix_ChannelFinished__proxy: 'sync',
-  Mix_ChannelFinished__sig: 'vi',
-  Mix_ChannelFinished: function(func) {
+  Mix_ChannelFinished: (func) => {
     SDL.channelFinished = func;
   },
 
   Mix_Volume__proxy: 'sync',
-  Mix_Volume__sig: 'iii',
-  Mix_Volume: function(channel, volume) {
+  Mix_Volume: (channel, volume) => {
     if (channel == -1) {
       for (var i = 0; i < SDL.numChannels-1; i++) {
         _Mix_Volume(i, volume);
@@ -2757,8 +2648,7 @@ var LibrarySDL = {
 
   // Note: Mix_SetPanning requires WebAudio (file loaded from memory).
   Mix_SetPanning__proxy: 'sync',
-  Mix_SetPanning__sig: 'iiii',
-  Mix_SetPanning: function(channel, left, right) {
+  Mix_SetPanning: (channel, left, right) => {
     // SDL API uses [0-255], while PannerNode has an (x, y, z) position.
 
     // Normalizing.
@@ -2771,28 +2661,31 @@ var LibrarySDL = {
     return 1;
   },
 
-  Mix_LoadWAV_RW__deps: ['$PATH_FS'],
+  Mix_LoadWAV_RW__deps: [
+    '$FS',
+    '$PATH_FS',
+    'fileno',
+  ],
   Mix_LoadWAV_RW__proxy: 'sync',
-  Mix_LoadWAV_RW__sig: 'iii',
-  Mix_LoadWAV_RW__docs: '/** @param {number|boolean=} freesrc */',
-  Mix_LoadWAV_RW: function(rwopsID, freesrc) {
+  Mix_LoadWAV_RW__docs: '/** @param {number} freesrc */',
+  Mix_LoadWAV_RW: (rwopsID, freesrc) => {
     var rwops = SDL.rwops[rwopsID];
 
 #if USE_SDL == 2
     if (rwops === undefined) {
-      var type = {{{ makeGetValue('rwopsID + ' + 20 /*type*/, '0', 'i32') }}};
+      var type = {{{ makeGetValue('rwopsID', C_STRUCTS.SDL_RWops.type, 'i32') }}};
 
       if (type === 2/*SDL_RWOPS_STDFILE*/) {
-        var fp = {{{ makeGetValue('rwopsID + ' + 28 /*hidden.stdio.fp*/, '0', 'i32') }}};
-        var fd = Module['_fileno'](fp);
+        var fp = {{{ makeGetValue('rwopsID', C_STRUCTS.SDL_RWops.hidden.stdio.fp, 'i32') }}};
+        var fd = _fileno(fp);
         var stream = FS.getStream(fd);
         if (stream) {
           rwops = { filename: stream.path };
         }
       }
       else if (type === 4/*SDL_RWOPS_MEMORY*/ || type === 5/*SDL_RWOPS_MEMORY_RO*/) {
-        var base = {{{ makeGetValue('rwopsID + ' + 24 /*hidden.mem.base*/, '0', 'i32') }}};
-        var stop = {{{ makeGetValue('rwopsID + ' + 32 /*hidden.mem.stop*/, '0', 'i32') }}};
+        var base = {{{ makeGetValue('rwopsID', C_STRUCTS.SDL_RWops.hidden.mem.base, 'i32') }}};
+        var stop = {{{ makeGetValue('rwopsID', C_STRUCTS.SDL_RWops.hidden.mem.stop, 'i32') }}};
 
         rwops = { bytes: base, count: stop - base };
       }
@@ -2809,21 +2702,21 @@ var LibrarySDL = {
 
     if (rwops.filename !== undefined) {
       filename = PATH_FS.resolve(rwops.filename);
-      var raw = Module["preloadedAudios"][filename];
+      var raw = preloadedAudios[filename];
       if (!raw) {
         if (raw === null) err('Trying to reuse preloaded audio, but freePreloadedMediaOnUse is set!');
-        if (!Module.noAudioDecoding) warnOnce('Cannot find preloaded audio ' + filename);
+        if (!Module['noAudioDecoding']) warnOnce('Cannot find preloaded audio ' + filename);
 
         // see if we can read the file-contents from the in-memory FS
         try {
           bytes = FS.readFile(filename);
         } catch (e) {
-          err('Couldn\'t find file for: ' + filename);
+          err(`Couldn't find file for: ${filename}`);
           return 0;
         }
       }
       if (Module['freePreloadedMediaOnUse']) {
-        Module["preloadedAudios"][filename] = null;
+        preloadedAudios[filename] = null;
       }
       audio = raw;
     }
@@ -2851,10 +2744,10 @@ var LibrarySDL = {
       // after loading. Therefore prepare an array of callback handlers to run when this audio decoding is complete, which
       // will then start the playback (with some delay).
       webAudio.onDecodeComplete = []; // While this member array exists, decoding hasn't finished yet.
-      var onDecodeComplete = function(data) {
+      var onDecodeComplete = (data) => {
         webAudio.decodedBuffer = data;
         // Call all handlers that were waiting for this decode to finish, and clear the handler list.
-        webAudio.onDecodeComplete.forEach(function(e) { e(); });
+        webAudio.onDecodeComplete.forEach((e) => e());
         webAudio.onDecodeComplete = undefined; // Don't allow more callback handlers since audio has finished decoding.
       };
       SDL.audioContext['decodeAudioData'](arrayBuffer, onDecodeComplete);
@@ -2872,32 +2765,30 @@ var LibrarySDL = {
     // Keep the loaded audio in the audio arrays, ready for playback
     SDL.audios.push({
       source: filename,
-      audio: audio, // Points to the <audio> element, if loaded
-      webAudio: webAudio // Points to a Web Audio -specific resource object, if loaded
+      audio, // Points to the <audio> element, if loaded
+      webAudio // Points to a Web Audio -specific resource object, if loaded
     });
     return id;
   },
 
   Mix_LoadWAV__deps: ['Mix_LoadWAV_RW', 'SDL_RWFromFile', 'SDL_FreeRW'],
   Mix_LoadWAV__proxy: 'sync',
-  Mix_LoadWAV__sig: 'ii',
-  Mix_LoadWAV: function(filename) {
-    var rwops = _SDL_RWFromFile(filename);
-    var result = _Mix_LoadWAV_RW(rwops);
+  Mix_LoadWAV: (filename) => {
+    var rwops = _SDL_RWFromFile(filename, 0);
+    var result = _Mix_LoadWAV_RW(rwops, 0);
     _SDL_FreeRW(rwops);
     return result;
   },
 
   Mix_QuickLoad_RAW__proxy: 'sync',
-  Mix_QuickLoad_RAW__sig: 'iii',
-  Mix_QuickLoad_RAW: function(mem, len) {
+  Mix_QuickLoad_RAW: (mem, len) => {
     var audio;
     var webAudio;
 
     var numSamples = len >> 1; // len is the length in bytes, and the array contains 16-bit PCM values
     var buffer = new Float32Array(numSamples);
     for (var i = 0; i < numSamples; ++i) {
-      buffer[i] = ({{{ makeGetValue('mem', 'i*2', 'i16', 0, 0) }}}) / 0x8000; // hardcoded 16-bit audio, signed (TODO: reSign if not ta2?)
+      buffer[i] = ({{{ makeGetValue('mem', 'i*2', 'i16') }}}) / 0x8000; // hardcoded 16-bit audio, signed (TODO: reSign if not ta2?)
     }
 
     if (SDL.webAudioAvailable()) {
@@ -2915,27 +2806,26 @@ var LibrarySDL = {
     var id = SDL.audios.length;
     SDL.audios.push({
       source: '',
-      audio: audio,
-      webAudio: webAudio,
-      buffer: buffer
+      audio,
+      webAudio,
+      buffer
     });
     return id;
   },
 
   Mix_FreeChunk__proxy: 'sync',
-  Mix_FreeChunk__sig: 'vi',
-  Mix_FreeChunk: function(id) {
+  Mix_FreeChunk: (id) => {
     SDL.audios[id] = null;
   },
   Mix_ReserveChannels__proxy: 'sync',
-  Mix_ReserveChannels__sig: 'ii',
-  Mix_ReserveChannels: function(num) {
+  Mix_ReserveChannels: (num) => {
     SDL.channelMinimumNumber = num;
   },
-  Mix_PlayChannel__proxy: 'sync',
-  Mix_PlayChannel__sig: 'iiii',
-  Mix_PlayChannel: function(channel, id, loops) {
+  Mix_PlayChannelTimed__deps: ['Mix_HaltChannel'],
+  Mix_PlayChannelTimed__proxy: 'sync',
+  Mix_PlayChannelTimed: (channel, id, loops, ticks) => {
     // TODO: handle fixed amount of N loops. Currently loops either 0 or infinite times.
+    assert(ticks == -1);
 
     // Get the audio element associated with the ID
     var info = SDL.audios[id];
@@ -2952,7 +2842,7 @@ var LibrarySDL = {
         }
       }
       if (channel == -1) {
-        err('All ' + SDL.numChannels + ' channels in use!');
+        err(`All ${SDL.numChannels}  channels in use!`);
         return -1;
       }
     }
@@ -2974,9 +2864,14 @@ var LibrarySDL = {
       audio.numChannels = info.audio.numChannels;
       audio.frequency = info.audio.frequency;
     }
-    audio['onended'] = function SDL_audio_onended() { // TODO: cache these
-      if (channelInfo.audio == this) { channelInfo.audio.paused = true; channelInfo.audio = null; }
+    audio['onended'] = function() { // TODO: cache these
+      if (channelInfo.audio === this || channelInfo.audio.webAudioNode === this) { 
+        channelInfo.audio.paused = true; channelInfo.audio = null; 
+      }
       if (SDL.channelFinished)  {{{ makeDynCall('vi', 'SDL.channelFinished') }}}(channel);
+    }
+    if (channelInfo.audio) {
+      _Mix_HaltChannel(channel);
     }
     channelInfo.audio = audio;
     // TODO: handle N loops. Behavior matches Mix_PlayMusic
@@ -2985,15 +2880,11 @@ var LibrarySDL = {
     audio.play();
     return channel;
   },
-  Mix_PlayChannelTimed: 'Mix_PlayChannel', // XXX ignore Timing
 
-  Mix_FadingChannel: function(channel) {
-    return 0; // MIX_NO_FADING, TODO
-  },
+  Mix_FadingChannel: (channel) => 0, // MIX_NO_FADING, TODO
 
   Mix_HaltChannel__proxy: 'sync',
-  Mix_HaltChannel__sig: 'ii',
-  Mix_HaltChannel: function(channel) {
+  Mix_HaltChannel: (channel) => {
     function halt(channel) {
       var info = /** @type {{ audio: HTMLMediaElement }} */ (SDL.channels[channel]);
       if (info.audio) {
@@ -3014,8 +2905,7 @@ var LibrarySDL = {
 
   Mix_HookMusicFinished__deps: ['Mix_HaltMusic'],
   Mix_HookMusicFinished__proxy: 'sync',
-  Mix_HookMusicFinished__sig: 'vi',
-  Mix_HookMusicFinished: function(func) {
+  Mix_HookMusicFinished: (func) => {
     SDL.hookMusicFinished = func;
     if (SDL.music.audio) { // ensure the callback will be called, if a music is already playing
       SDL.music.audio['onended'] = _Mix_HaltMusic;
@@ -3023,19 +2913,17 @@ var LibrarySDL = {
   },
 
   Mix_VolumeMusic__proxy: 'sync',
-  Mix_VolumeMusic__sig: 'ii',
-  Mix_VolumeMusic: function(volume) {
+  Mix_VolumeMusic: (volume) => {
     return SDL.setGetVolume(SDL.music, volume);
   },
 
-  Mix_LoadMUS_RW__docs: '/** @param {number|boolean=} a1 */',
-  Mix_LoadMUS_RW: 'Mix_LoadWAV_RW',
+  Mix_LoadMUS_RW__deps: ['Mix_LoadWAV_RW'],
+  Mix_LoadMUS_RW: (filename) => _Mix_LoadWAV_RW(filename, 0),
 
   Mix_LoadMUS__deps: ['Mix_LoadMUS_RW', 'SDL_RWFromFile', 'SDL_FreeRW'],
   Mix_LoadMUS__proxy: 'sync',
-  Mix_LoadMUS__sig: 'ii',
-  Mix_LoadMUS: function(filename) {
-    var rwops = _SDL_RWFromFile(filename);
+  Mix_LoadMUS: (filename) => {
+    var rwops = _SDL_RWFromFile(filename, 0);
     var result = _Mix_LoadMUS_RW(rwops);
     _SDL_FreeRW(rwops);
     return result;
@@ -3045,11 +2933,10 @@ var LibrarySDL = {
 
   Mix_PlayMusic__deps: ['Mix_HaltMusic'],
   Mix_PlayMusic__proxy: 'sync',
-  Mix_PlayMusic__sig: 'iii',
-  Mix_PlayMusic: function(id, loops) {
+  Mix_PlayMusic: (id, loops) => {
     // Pause old music if it exists.
     if (SDL.music.audio) {
-      if (!SDL.music.audio.paused) err('Music is already playing. ' + SDL.music.source);
+      if (!SDL.music.audio.paused) err(`Music is already playing. ${SDL.music.source}`);
       SDL.music.audio.pause();
     }
     var info = SDL.audios[id];
@@ -3065,7 +2952,11 @@ var LibrarySDL = {
     } else if (info.audio) { // Play via the <audio> element
       audio = info.audio;
     }
-    audio['onended'] = function() { if (SDL.music.audio == this) _Mix_HaltMusic(); } // will send callback
+    audio['onended'] = function() { 
+      if (SDL.music.audio === this || SDL.music.audio?.webAudioNode === this) {
+        _Mix_HaltMusic(); // will send callback
+      }
+    }
     audio.loop = loops != 0 && loops != 1; // TODO: handle N loops for finite N
     audio.volume = SDL.music.volume;
     SDL.music.audio = audio;
@@ -3074,22 +2965,19 @@ var LibrarySDL = {
   },
 
   Mix_PauseMusic__proxy: 'sync',
-  Mix_PauseMusic__sig: 'v',
-  Mix_PauseMusic: function() {
+  Mix_PauseMusic: () => {
     var audio = /** @type {HTMLMediaElement} */ (SDL.music.audio);
-    if (audio) audio.pause();
+    audio?.pause();
   },
 
   Mix_ResumeMusic__proxy: 'sync',
-  Mix_ResumeMusic__sig: 'v',
-  Mix_ResumeMusic: function() {
+  Mix_ResumeMusic: () => {
     var audio = SDL.music.audio;
-    if (audio) audio.play();
+    audio?.play();
   },
 
   Mix_HaltMusic__proxy: 'sync',
-  Mix_HaltMusic__sig: 'i',
-  Mix_HaltMusic: function() {
+  Mix_HaltMusic: () => {
     var audio = /** @type {HTMLMediaElement} */ (SDL.music.audio);
     if (audio) {
       audio.src = audio.src; // rewind <media> element
@@ -3108,16 +2996,14 @@ var LibrarySDL = {
   Mix_FadeOutMusic: 'Mix_HaltMusic', // XXX ignore fading out effect
 
   Mix_PlayingMusic__proxy: 'sync',
-  Mix_PlayingMusic__sig: 'i',
-  Mix_PlayingMusic: function() {
+  Mix_PlayingMusic: () => {
     return (SDL.music.audio && !SDL.music.audio.paused) ? 1 : 0;
   },
 
   // http://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer_38.html#SEC38
   // "Note: Does not check if the channel has been paused."
   Mix_Playing__proxy: 'sync',
-  Mix_Playing__sig: 'ii',
-  Mix_Playing: function(channel) {
+  Mix_Playing: (channel) => {
     if (channel === -1) {
       var count = 0;
       for (var i = 0; i < SDL.channels.length; i++) {
@@ -3126,15 +3012,14 @@ var LibrarySDL = {
       return count;
     }
     var info = SDL.channels[channel];
-    if (info && info.audio && !info.audio.paused) {
+    if (info?.audio && !info.audio.paused) {
       return 1;
     }
     return 0;
   },
 
   Mix_Pause__proxy: 'sync',
-  Mix_Pause__sig: 'vi',
-  Mix_Pause: function(channel) {
+  Mix_Pause: (channel) => {
     if (channel === -1) {
       for (var i = 0; i<SDL.channels.length;i++) {
         _Mix_Pause(i);
@@ -3143,17 +3028,16 @@ var LibrarySDL = {
     }
     /** @type {{ audio: HTMLMediaElement }} */
     var info = SDL.channels[channel];
-    if (info && info.audio) {
+    if (info?.audio) {
       info.audio.pause();
     } else {
-      //err('Mix_Pause: no sound found for channel: ' + channel);
+      //err(`Mix_Pause: no sound found for channel: ${channel}`);
     }
   },
 
   // http://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer_39.html#SEC39
   Mix_Paused__proxy: 'sync',
-  Mix_Paused__sig: 'ii',
-  Mix_Paused: function(channel) {
+  Mix_Paused: (channel) => {
     if (channel === -1) {
       var pausedCount = 0;
       for (var i = 0; i<SDL.channels.length;i++) {
@@ -3162,22 +3046,18 @@ var LibrarySDL = {
       return pausedCount;
     }
     var info = SDL.channels[channel];
-    if (info && info.audio && info.audio.paused) {
+    if (info?.audio?.paused) {
       return 1;
     }
     return 0;
   },
 
   Mix_PausedMusic__proxy: 'sync',
-  Mix_PausedMusic__sig: 'i',
-  Mix_PausedMusic: function() {
-    return (SDL.music.audio && SDL.music.audio.paused) ? 1 : 0;
-  },
+  Mix_PausedMusic: () => SDL.music.audio?.paused ? 1 : 0,
 
   // http://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer_33.html#SEC33
   Mix_Resume__proxy: 'sync',
-  Mix_Resume__sig: 'vi',
-  Mix_Resume: function(channel) {
+  Mix_Resume: (channel) => {
     if (channel === -1) {
       for (var i = 0; i<SDL.channels.length;i++) {
         _Mix_Resume(i);
@@ -3185,14 +3065,13 @@ var LibrarySDL = {
       return;
     }
     var info = SDL.channels[channel];
-    if (info && info.audio) info.audio.play();
+    if (info?.audio) info.audio.play();
   },
 
   // SDL TTF
 
   TTF_Init__proxy: 'sync',
-  TTF_Init__sig: 'i',
-  TTF_Init: function() {
+  TTF_Init: () => {
     // OffscreenCanvas 2D is faster than Canvas for text operations, so we use
     // it if it's available.
     try {
@@ -3219,26 +3098,23 @@ var LibrarySDL = {
   },
 
   TTF_OpenFont__proxy: 'sync',
-  TTF_OpenFont__sig: 'iii',
-  TTF_OpenFont: function(filename, size) {
-    filename = PATH.normalize(UTF8ToString(filename));
+  TTF_OpenFont: (name, size) => {
+    name = PATH.normalize(UTF8ToString(name));
     var id = SDL.fonts.length;
     SDL.fonts.push({
-      name: filename, // but we don't actually do anything with it..
-      size: size
+      name, // but we don't actually do anything with it..
+      size
     });
     return id;
   },
 
   TTF_CloseFont__proxy: 'sync',
-  TTF_CloseFont__sig: 'vi',
-  TTF_CloseFont: function(font) {
+  TTF_CloseFont: (font) => {
     SDL.fonts[font] = null;
   },
 
   TTF_RenderText_Solid__proxy: 'sync',
-  TTF_RenderText_Solid__sig: 'iiii',
-  TTF_RenderText_Solid: function(font, text, color) {
+  TTF_RenderText_Solid: (font, text, color) => {
     // XXX the font and color are ignored
     text = UTF8ToString(text) || ' '; // if given an empty string, still return a valid surface
     var fontData = SDL.fonts[font];
@@ -3265,72 +3141,65 @@ var LibrarySDL = {
   TTF_SizeUTF8: 'TTF_SizeText',
 
   TTF_SizeText__proxy: 'sync',
-  TTF_SizeText__sig: 'iiiii',
-  TTF_SizeText: function(font, text, w, h) {
+  TTF_SizeText: (font, text, w, h) => {
     var fontData = SDL.fonts[font];
     if (w) {
-      {{{ makeSetValue('w', '0', 'SDL.estimateTextWidth(fontData, UTF8ToString(text))', 'i32') }}};
+      {{{ makeSetValue('w', 0, 'SDL.estimateTextWidth(fontData, UTF8ToString(text))', 'i32') }}};
     }
     if (h) {
-      {{{ makeSetValue('h', '0', 'fontData.size', 'i32') }}};
+      {{{ makeSetValue('h', 0, 'fontData.size', 'i32') }}};
     }
     return 0;
   },
 
   TTF_GlyphMetrics__proxy: 'sync',
-  TTF_GlyphMetrics__sig: 'iiiiiiii',
-  TTF_GlyphMetrics: function(font, ch, minx, maxx, miny, maxy, advance) {
+  TTF_GlyphMetrics: (font, ch, minx, maxx, miny, maxy, advance) => {
     var fontData = SDL.fonts[font];
     var width = SDL.estimateTextWidth(fontData,  String.fromCharCode(ch));
 
     if (advance) {
-      {{{ makeSetValue('advance', '0', 'width', 'i32') }}};
+      {{{ makeSetValue('advance', 0, 'width', 'i32') }}};
     }
     if (minx) {
-      {{{ makeSetValue('minx', '0', '0', 'i32') }}};
+      {{{ makeSetValue('minx', 0, '0', 'i32') }}};
     }
     if (maxx) {
-      {{{ makeSetValue('maxx', '0', 'width', 'i32') }}};
+      {{{ makeSetValue('maxx', 0, 'width', 'i32') }}};
     }
     if (miny) {
-      {{{ makeSetValue('miny', '0', '0', 'i32') }}};
+      {{{ makeSetValue('miny', 0, '0', 'i32') }}};
     }
     if (maxy) {
-      {{{ makeSetValue('maxy', '0', 'fontData.size', 'i32') }}};
+      {{{ makeSetValue('maxy', 0, 'fontData.size', 'i32') }}};
     }
   },
 
   TTF_FontAscent__proxy: 'sync',
-  TTF_FontAscent__sig: 'ii',
-  TTF_FontAscent: function(font) {
+  TTF_FontAscent: (font) => {
     var fontData = SDL.fonts[font];
     return (fontData.size*0.98)|0; // XXX
   },
 
   TTF_FontDescent__proxy: 'sync',
-  TTF_FontDescent__sig: 'ii',
-  TTF_FontDescent: function(font) {
+  TTF_FontDescent: (font) => {
     var fontData = SDL.fonts[font];
     return (fontData.size*0.02)|0; // XXX
   },
 
   TTF_FontHeight__proxy: 'sync',
-  TTF_FontHeight__sig: 'ii',
-  TTF_FontHeight: function(font) {
+  TTF_FontHeight: (font) => {
     var fontData = SDL.fonts[font];
     return fontData.size;
   },
 
   TTF_FontLineSkip: 'TTF_FontHeight', // XXX
 
-  TTF_Quit: function() {
-    out('TTF_Quit called (and ignored)');
-  },
+  TTF_Quit: () => out('TTF_Quit called (and ignored)'),
 
   // SDL gfx
 
   $SDL_gfx: {
-    drawRectangle: function(surf, x1, y1, x2, y2, action, cssColor) {
+    drawRectangle: (surf, x1, y1, x2, y2, action, cssColor) => {
       x1 = x1 << 16 >> 16;
       y1 = y1 << 16 >> 16;
       x2 = x2 << 16 >> 16;
@@ -3347,7 +3216,7 @@ var LibrarySDL = {
       surfData.ctx[action + 'Rect'](x, y, w, h);
       surfData.ctx.restore();
     },
-    drawLine: function(surf, x1, y1, x2, y2, cssColor) {
+    drawLine: (surf, x1, y1, x2, y2, cssColor) => {
       x1 = x1 << 16 >> 16;
       y1 = y1 << 16 >> 16;
       x2 = x2 << 16 >> 16;
@@ -3363,7 +3232,7 @@ var LibrarySDL = {
       surfData.ctx.restore();
     },
     // See http://stackoverflow.com/questions/2172798/how-to-draw-an-oval-in-html5-canvas
-    drawEllipse: function(surf, x, y, rx, ry, action, cssColor) {
+    drawEllipse: (surf, x, y, rx, ry, action, cssColor) => {
       x = x << 16 >> 16;
       y = y << 16 >> 16;
       rx = rx << 16 >> 16;
@@ -3384,72 +3253,57 @@ var LibrarySDL = {
       surfData.ctx.restore();
     },
     // the gfx library uses something different from the rest of SDL...
-    translateColorToCSSRGBA: function(rgba) {
-      return 'rgba(' + (rgba>>>24) + ',' + (rgba>>16 & 0xff) + ',' + (rgba>>8 & 0xff) + ',' + (rgba&0xff) + ')';
-    }
+    translateColorToCSSRGBA: (rgba) => `rgba(${rgba>>>24},${rgba>>16 & 0xff},${rgba>>8 & 0xff},${rgba&0xff})`,
   },
 
   boxColor__deps: ['$SDL_gfx'],
-  boxColor: function(surf, x1, y1, x2, y2, color) {
-    return SDL_gfx.drawRectangle(surf, x1, y1, x2, y2, 'fill', SDL_gfx.translateColorToCSSRGBA(color));
-  },
+  boxColor: (surf, x1, y1, x2, y2, color) =>
+    SDL_gfx.drawRectangle(surf, x1, y1, x2, y2, 'fill', SDL_gfx.translateColorToCSSRGBA(color)),
 
   boxRGBA__deps: ['$SDL_gfx'],
-  boxRGBA: function(surf, x1, y1, x2, y2, r, g, b, a) {
-    return SDL_gfx.drawRectangle(surf, x1, y1, x2, y2, 'fill', SDL.translateRGBAToCSSRGBA(r, g, b, a));
-  },
+  boxRGBA: (surf, x1, y1, x2, y2, r, g, b, a) =>
+    SDL_gfx.drawRectangle(surf, x1, y1, x2, y2, 'fill', SDL.translateRGBAToCSSRGBA(r, g, b, a)),
 
   rectangleColor__deps: ['$SDL_gfx'],
-  rectangleColor: function(surf, x1, y1, x2, y2, color) {
-    return SDL_gfx.drawRectangle(surf, x1, y1, x2, y2, 'stroke', SDL_gfx.translateColorToCSSRGBA(color));
-  },
+  rectangleColor: (surf, x1, y1, x2, y2, color) =>
+    SDL_gfx.drawRectangle(surf, x1, y1, x2, y2, 'stroke', SDL_gfx.translateColorToCSSRGBA(color)),
 
   rectangleRGBA__deps: ['$SDL_gfx'],
-  rectangleRGBA: function(surf, x1, y1, x2, y2, r, g, b, a) {
-    return SDL_gfx.drawRectangle(surf, x1, y1, x2, y2, 'stroke', SDL.translateRGBAToCSSRGBA(r, g, b, a));
-  },
+  rectangleRGBA: (surf, x1, y1, x2, y2, r, g, b, a) =>
+    SDL_gfx.drawRectangle(surf, x1, y1, x2, y2, 'stroke', SDL.translateRGBAToCSSRGBA(r, g, b, a)),
 
   ellipseColor__deps: ['$SDL_gfx'],
-  ellipseColor: function(surf, x, y, rx, ry, color) {
-    return SDL_gfx.drawEllipse(surf, x, y, rx, ry, 'stroke', SDL_gfx.translateColorToCSSRGBA(color));
-  },
+  ellipseColor: (surf, x, y, rx, ry, color) =>
+    SDL_gfx.drawEllipse(surf, x, y, rx, ry, 'stroke', SDL_gfx.translateColorToCSSRGBA(color)),
 
   ellipseRGBA__deps: ['$SDL_gfx'],
-  ellipseRGBA: function(surf, x, y, rx, ry, r, g, b, a) {
-    return SDL_gfx.drawEllipse(surf, x, y, rx, ry, 'stroke', SDL.translateRGBAToCSSRGBA(r, g, b, a));
-  },
+  ellipseRGBA: (surf, x, y, rx, ry, r, g, b, a) =>
+    SDL_gfx.drawEllipse(surf, x, y, rx, ry, 'stroke', SDL.translateRGBAToCSSRGBA(r, g, b, a)),
 
   filledEllipseColor__deps: ['$SDL_gfx'],
-  filledEllipseColor: function(surf, x, y, rx, ry, color) {
-    return SDL_gfx.drawEllipse(surf, x, y, rx, ry, 'fill', SDL_gfx.translateColorToCSSRGBA(color));
-  },
+  filledEllipseColor: (surf, x, y, rx, ry, color) =>
+    SDL_gfx.drawEllipse(surf, x, y, rx, ry, 'fill', SDL_gfx.translateColorToCSSRGBA(color)),
 
   filledEllipseRGBA__deps: ['$SDL_gfx'],
-  filledEllipseRGBA: function(surf, x, y, rx, ry, r, g, b, a) {
-    return SDL_gfx.drawEllipse(surf, x, y, rx, ry, 'fill', SDL.translateRGBAToCSSRGBA(r, g, b, a));
-  },
+  filledEllipseRGBA: (surf, x, y, rx, ry, r, g, b, a) =>
+    SDL_gfx.drawEllipse(surf, x, y, rx, ry, 'fill', SDL.translateRGBAToCSSRGBA(r, g, b, a)),
 
   lineColor__deps: ['$SDL_gfx'],
-  lineColor: function(surf, x1, y1, x2, y2, color) {
-    return SDL_gfx.drawLine(surf, x1, y1, x2, y2, SDL_gfx.translateColorToCSSRGBA(color));
-  },
+  lineColor: (surf, x1, y1, x2, y2, color) =>
+    SDL_gfx.drawLine(surf, x1, y1, x2, y2, SDL_gfx.translateColorToCSSRGBA(color)),
 
   lineRGBA__deps: ['$SDL_gfx'],
-  lineRGBA: function(surf, x1, y1, x2, y2, r, g, b, a) {
-    return SDL_gfx.drawLine(surf, x1, y1, x2, y2, SDL.translateRGBAToCSSRGBA(r, g, b, a));
-  },
+  lineRGBA: (surf, x1, y1, x2, y2, r, g, b, a) =>
+    SDL_gfx.drawLine(surf, x1, y1, x2, y2, SDL.translateRGBAToCSSRGBA(r, g, b, a)),
 
   pixelRGBA__deps: ['boxRGBA'],
-  pixelRGBA: function(surf, x1, y1, r, g, b, a) {
-    // This cannot be fast, to render many pixels this way!
-    _boxRGBA(surf, x1, y1, x1, y1, r, g, b, a);
-  },
+  // This cannot be fast, to render many pixels this way!
+  pixelRGBA: (surf, x1, y1, r, g, b, a) => _boxRGBA(surf, x1, y1, x1, y1, r, g, b, a),
 
   // GL
 
   SDL_GL_SetAttribute__proxy: 'sync',
-  SDL_GL_SetAttribute__sig: 'iii',
-  SDL_GL_SetAttribute: function(attr, value) {
+  SDL_GL_SetAttribute: (attr, value) => {
     if (!(attr in SDL.glAttributes)) {
       abort('Unknown SDL GL attribute (' + attr + '). Please check if your SDL version is supported.');
     }
@@ -3458,38 +3312,32 @@ var LibrarySDL = {
   },
 
   SDL_GL_GetAttribute__proxy: 'sync',
-  SDL_GL_GetAttribute__sig: 'iii',
-  SDL_GL_GetAttribute: function(attr, value) {
+  SDL_GL_GetAttribute: (attr, value) => {
     if (!(attr in SDL.glAttributes)) {
       abort('Unknown SDL GL attribute (' + attr + '). Please check if your SDL version is supported.');
     }
 
-    if (value) {{{ makeSetValue('value', '0', 'SDL.glAttributes[attr]', 'i32') }}};
+    if (value) {{{ makeSetValue('value', 0, 'SDL.glAttributes[attr]', 'i32') }}};
 
     return 0;
   },
 
   SDL_GL_SwapBuffers__proxy: 'sync',
-  SDL_GL_SwapBuffers__sig: 'v',
-  SDL_GL_SwapBuffers: function() {
-    if (Browser.doSwapBuffers) Browser.doSwapBuffers(); // in workers, this is used to send out a buffered frame
+  SDL_GL_SwapBuffers: () => {
+    Browser.doSwapBuffers?.(); // in workers, this is used to send out a buffered frame
   },
 
   // SDL 2
 
   SDL_GL_ExtensionSupported__proxy: 'sync',
-  SDL_GL_ExtensionSupported__sig: 'ii',
-  SDL_GL_ExtensionSupported: function(extension) {
-    return Module.ctx.getExtension(extension) | 0;
-  },
+  SDL_GL_ExtensionSupported: (extension) => Module.ctx.getExtension(extension) | 0,
 
-  SDL_DestroyWindow: function(window) {},
+  SDL_DestroyWindow: (window) => {},
 
-  SDL_DestroyRenderer: function(renderer) {},
+  SDL_DestroyRenderer: (renderer) => {},
 
   SDL_GetWindowFlags__proxy: 'sync',
-  SDL_GetWindowFlags__sig: 'iii',
-  SDL_GetWindowFlags: function(x, y) {
+  SDL_GetWindowFlags: (window) => {
     if (Browser.isFullscreen) {
        return 1;
     }
@@ -3497,71 +3345,59 @@ var LibrarySDL = {
     return 0;
   },
 
-  SDL_GL_SwapWindow: function(window) {},
+  SDL_GL_SwapWindow: (window) => {},
 
-  SDL_GL_MakeCurrent: function(window, context) {},
+  SDL_GL_MakeCurrent: (window, context) => {},
 
-  SDL_GL_DeleteContext: function(context) {},
+  SDL_GL_DeleteContext: (context) => {},
 
   SDL_GL_GetSwapInterval__proxy: 'sync',
-  SDL_GL_GetSwapInterval__sig: 'ii',
-  SDL_GL_GetSwapInterval: function(state) {
-    if (Browser.mainLoop.timingMode == 1/*EM_TIMING_RAF*/) return Browser.mainLoop.timingValue;
+  SDL_GL_GetSwapInterval: () => {
+    if (MainLoop.timingMode == {{{ cDefs.EM_TIMING_RAF }}}) return MainLoop.timingValue;
     else return 0;
   },
 
   SDL_GL_SetSwapInterval__deps: ['emscripten_set_main_loop_timing'],
-  SDL_GL_SetSwapInterval: function(state) {
-    _emscripten_set_main_loop_timing(1/*EM_TIMING_RAF*/, state);
+  SDL_GL_SetSwapInterval: (state) => {
+    _emscripten_set_main_loop_timing({{{ cDefs.EM_TIMING_RAF }}}, state);
   },
 
   SDL_SetWindowTitle__proxy: 'sync',
-  SDL_SetWindowTitle__sig: 'vii',
-  SDL_SetWindowTitle: function(window, title) {
+  SDL_SetWindowTitle: (window, title) => {
     if (title) document.title = UTF8ToString(title);
   },
 
   SDL_GetWindowSize__proxy: 'sync',
-  SDL_GetWindowSize__sig: 'viii',
-  SDL_GetWindowSize: function(window, width, height){
+  SDL_GetWindowSize: (window, width, height) => {
     var w = Module['canvas'].width;
     var h = Module['canvas'].height;
-    if (width) {{{ makeSetValue('width', '0', 'w', 'i32') }}};
-    if (height) {{{ makeSetValue('height', '0', 'h', 'i32') }}};
+    if (width) {{{ makeSetValue('width', 0, 'w', 'i32') }}};
+    if (height) {{{ makeSetValue('height', 0, 'h', 'i32') }}};
   },
 
-  SDL_LogSetOutputFunction: function(callback, userdata) {},
+  SDL_LogSetOutputFunction: (callback, userdata) => {},
 
   SDL_SetWindowFullscreen__proxy: 'sync',
-  SDL_SetWindowFullscreen__sig: 'iii',
-  SDL_SetWindowFullscreen: function(window, fullscreen) {
+  SDL_SetWindowFullscreen: (window, fullscreen) => {
     if (Browser.isFullscreen) {
       Module['canvas'].exitFullscreen();
       return 1;
-    } else {
-      return 0;
     }
+    return 0;
   },
 
-  SDL_GetWindowFlags: function() {},
-
-  SDL_ClearError: function() {},
+  SDL_ClearError: () => {},
 
   // TODO
 
-  SDL_SetGamma: function(r, g, b) {
-    return -1;
-  },
+  SDL_SetGamma: (r, g, b) => -1,
 
-  SDL_SetGammaRamp: function(redTable, greenTable, blueTable) {
-    return -1;
-  },
+  SDL_SetGammaRamp: (redTable, greenTable, blueTable) => -1,
 
   // Joysticks
 
   SDL_NumJoysticks__proxy: 'sync',
-  SDL_NumJoysticks__sig: 'i',
-  SDL_NumJoysticks: function() {
+  SDL_NumJoysticks: () => {
     var count = 0;
     var gamepads = SDL.getGamepads();
     // The length is not the number of gamepads; check which ones are defined.
@@ -3572,22 +3408,21 @@ var LibrarySDL = {
   },
 
   SDL_JoystickName__proxy: 'sync',
-  SDL_JoystickName__sig: 'ii',
-  SDL_JoystickName: function(deviceIndex) {
+  SDL_JoystickName__deps: ['$stringToNewUTF8'],
+  SDL_JoystickName: (deviceIndex) => {
     var gamepad = SDL.getGamepad(deviceIndex);
     if (gamepad) {
       var name = gamepad.id;
       if (SDL.joystickNamePool.hasOwnProperty(name)) {
         return SDL.joystickNamePool[name];
       }
-      return SDL.joystickNamePool[name] = allocateUTF8(name);
+      return SDL.joystickNamePool[name] = stringToNewUTF8(name);
     }
     return 0;
   },
 
   SDL_JoystickOpen__proxy: 'sync',
-  SDL_JoystickOpen__sig: 'ii',
-  SDL_JoystickOpen: function(deviceIndex) {
+  SDL_JoystickOpen: (deviceIndex) => {
     var gamepad = SDL.getGamepad(deviceIndex);
     if (gamepad) {
       // Use this as a unique 'pointer' for this joystick.
@@ -3599,19 +3434,13 @@ var LibrarySDL = {
   },
 
   SDL_JoystickOpened__proxy: 'sync',
-  SDL_JoystickOpened__sig: 'ii',
-  SDL_JoystickOpened: function(deviceIndex) {
-    return SDL.lastJoystickState.hasOwnProperty(deviceIndex+1) ? 1 : 0;
-  },
+  SDL_JoystickOpened: (deviceIndex) => SDL.lastJoystickState.hasOwnProperty(deviceIndex+1) ? 1 : 0,
 
-  SDL_JoystickIndex: function(joystick) {
-    // joystick pointers are simply the deviceIndex+1.
-    return joystick - 1;
-  },
+  // joystick pointers are simply the deviceIndex+1.
+  SDL_JoystickIndex: (joystick) => joystick - 1,
 
   SDL_JoystickNumAxes__proxy: 'sync',
-  SDL_JoystickNumAxes__sig: 'ii',
-  SDL_JoystickNumAxes: function(joystick) {
+  SDL_JoystickNumAxes: (joystick) => {
     var gamepad = SDL.getGamepad(joystick - 1);
     if (gamepad) {
       return gamepad.axes.length;
@@ -3619,13 +3448,12 @@ var LibrarySDL = {
     return 0;
   },
 
-  SDL_JoystickNumBalls: function(joystick) { return 0; },
+  SDL_JoystickNumBalls: (joystick) => 0,
 
-  SDL_JoystickNumHats: function(joystick) { return 0; },
+  SDL_JoystickNumHats: (joystick) => 0,
 
   SDL_JoystickNumButtons__proxy: 'sync',
-  SDL_JoystickNumButtons__sig: 'ii',
-  SDL_JoystickNumButtons: function(joystick) {
+  SDL_JoystickNumButtons: (joystick) => {
     var gamepad = SDL.getGamepad(joystick - 1);
     if (gamepad) {
       return gamepad.buttons.length;
@@ -3634,14 +3462,10 @@ var LibrarySDL = {
   },
 
   SDL_JoystickUpdate__proxy: 'sync',
-  SDL_JoystickUpdate__sig: 'v',
-  SDL_JoystickUpdate: function() {
-    SDL.queryJoysticks();
-  },
+  SDL_JoystickUpdate: () => SDL.queryJoysticks(),
 
   SDL_JoystickEventState__proxy: 'sync',
-  SDL_JoystickEventState__sig: 'ii',
-  SDL_JoystickEventState: function(state) {
+  SDL_JoystickEventState: (state) => {
     if (state < 0) {
       // SDL_QUERY: Return current state.
       return SDL.joystickEventState;
@@ -3650,8 +3474,7 @@ var LibrarySDL = {
   },
 
   SDL_JoystickGetAxis__proxy: 'sync',
-  SDL_JoystickGetAxis__sig: 'iii',
-  SDL_JoystickGetAxis: function(joystick, axis) {
+  SDL_JoystickGetAxis: (joystick, axis) => {
     var gamepad = SDL.getGamepad(joystick - 1);
     if (gamepad && gamepad.axes.length > axis) {
       return SDL.joystickAxisValueConversion(gamepad.axes[axis]);
@@ -3659,13 +3482,12 @@ var LibrarySDL = {
     return 0;
   },
 
-  SDL_JoystickGetHat: function(joystick, hat) { return 0; },
+  SDL_JoystickGetHat: (joystick, hat) => 0,
 
-  SDL_JoystickGetBall: function(joystick, ball, dxptr, dyptr) { return -1; },
+  SDL_JoystickGetBall: (joystick, ball, dxptr, dyptr) => -1,
 
   SDL_JoystickGetButton__proxy: 'sync',
-  SDL_JoystickGetButton__sig: 'iii',
-  SDL_JoystickGetButton: function(joystick, button) {
+  SDL_JoystickGetButton: (joystick, button) => {
     var gamepad = SDL.getGamepad(joystick - 1);
     if (gamepad && gamepad.buttons.length > button) {
       return SDL.getJoystickButtonState(gamepad.buttons[button]) ? 1 : 0;
@@ -3674,18 +3496,16 @@ var LibrarySDL = {
   },
 
   SDL_JoystickClose__proxy: 'sync',
-  SDL_JoystickClose__sig: 'vi',
-  SDL_JoystickClose: function(joystick) {
+  SDL_JoystickClose: (joystick) => {
     delete SDL.lastJoystickState[joystick];
   },
 
   // Misc
 
-  SDL_InitSubSystem: function(flags) { return 0 },
+  SDL_InitSubSystem: (flags) => 0,
 
   SDL_RWFromConstMem__proxy: 'sync',
-  SDL_RWFromConstMem__sig: 'iii',
-  SDL_RWFromConstMem: function(mem, size) {
+  SDL_RWFromConstMem: (mem, size) => {
     var id = SDL.rwops.length; // TODO: recycle ids when they are null
     SDL.rwops.push({ bytes: mem, count: size });
     return id;
@@ -3693,88 +3513,84 @@ var LibrarySDL = {
   SDL_RWFromMem: 'SDL_RWFromConstMem',
 
   SDL_RWFromFile__proxy: 'sync',
-  SDL_RWFromFile__sig: 'iii',
-  SDL_RWFromFile__docs: '/** @param {number=} mode */',
-  SDL_RWFromFile: function(_name, mode) {
+  SDL_RWFromFile__docs: '/** @param {number} mode */',
+  SDL_RWFromFile: (_name, mode) => {
     var id = SDL.rwops.length; // TODO: recycle ids when they are null
-    var name = UTF8ToString(_name);
-    SDL.rwops.push({ filename: name, mimetype: Browser.getMimetype(name) });
+    var filename = UTF8ToString(_name);
+    SDL.rwops.push({ filename, mimetype: Browser.getMimetype(filename) });
     return id;
   },
 
   SDL_FreeRW__proxy: 'sync',
-  SDL_FreeRW__sig: 'vi',
-  SDL_FreeRW: function(rwopsID) {
+  SDL_FreeRW: (rwopsID) => {
     SDL.rwops[rwopsID] = null;
     while (SDL.rwops.length > 0 && SDL.rwops[SDL.rwops.length-1] === null) {
       SDL.rwops.pop();
     }
   },
 
-  SDL_GetNumAudioDrivers: function() { return 1 },
-  SDL_GetCurrentAudioDriver: function() {
-    return allocateUTF8('Emscripten Audio');
-  },
-
+  SDL_GetNumAudioDrivers: () => 1,
+  SDL_GetCurrentAudioDriver__deps: ['$stringToNewUTF8'],
+  SDL_GetCurrentAudioDriver: () => stringToNewUTF8('Emscripten Audio'),
+  SDL_GetScancodeFromKey: (key) => SDL.scanCodes[key],
   SDL_GetAudioDriver__deps: ['SDL_GetCurrentAudioDriver'],
-  SDL_GetAudioDriver: function(index) { return _SDL_GetCurrentAudioDriver() },
+  SDL_GetAudioDriver: (index) => _SDL_GetCurrentAudioDriver(),
 
   SDL_EnableUNICODE__proxy: 'sync',
-  SDL_EnableUNICODE__sig: 'ii',
-  SDL_EnableUNICODE: function(on) {
+  SDL_EnableUNICODE: (on) => {
     var ret = SDL.unicode || 0;
     SDL.unicode = on;
     return ret;
   },
 
   SDL_AddTimer__proxy: 'sync',
-  SDL_AddTimer__sig: 'iiii',
-  SDL_AddTimer: function(interval, callback, param) {
-    return window.setTimeout(function() {
-      {{{ makeDynCall('iii', 'callback') }}}(interval, param);
-    }, interval);
-  },
+  SDL_AddTimer__deps: ['$safeSetTimeout'],
+  SDL_AddTimer: (interval, callback, param) =>
+    safeSetTimeout(
+      () => {{{ makeDynCall('iip', 'callback') }}}(interval, param),
+      interval),
+
   SDL_RemoveTimer__proxy: 'sync',
-  SDL_RemoveTimer__sig: 'ii',
-  SDL_RemoveTimer: function(id) {
-    window.clearTimeout(id);
+  SDL_RemoveTimer: (id) => {
+    clearTimeout(id);
     return true;
   },
 
   // TODO:
-  SDL_CreateThread: function() {
+  SDL_CreateThread: (fs, data, pfnBeginThread, pfnEndThread) => {
     throw 'SDL threads cannot be supported in the web platform because they assume shared state. See emscripten_create_worker etc. for a message-passing concurrency model that does let you run code in another thread.'
   },
 
-  SDL_WaitThread: function() { throw 'SDL_WaitThread' },
-  SDL_GetThreadID: function() { throw 'SDL_GetThreadID' },
-  SDL_ThreadID: function() { return 0; },
-  SDL_AllocRW: function() { throw 'SDL_AllocRW: TODO' },
-  SDL_CondBroadcast: function() { throw 'SDL_CondBroadcast: TODO' },
-  SDL_CondWaitTimeout: function() { throw 'SDL_CondWaitTimeout: TODO' },
-  SDL_WM_IconifyWindow: function() { throw 'SDL_WM_IconifyWindow TODO' },
+  SDL_WaitThread: (thread, status) => { throw 'SDL_WaitThread' },
+  SDL_GetThreadID: (thread) => { throw 'SDL_GetThreadID' },
+  SDL_ThreadID: () => 0,
+  SDL_AllocRW: () => { throw 'SDL_AllocRW: TODO' },
+  SDL_CondBroadcast: (cond) => { throw 'SDL_CondBroadcast: TODO' },
+  SDL_CondWaitTimeout: (cond, mutex, ms) => { throw 'SDL_CondWaitTimeout: TODO' },
+  SDL_WM_IconifyWindow: () => { throw 'SDL_WM_IconifyWindow TODO' },
 
-  Mix_SetPostMix: function() { warnOnce('Mix_SetPostMix: TODO') },
+  Mix_SetPostMix: (func, arg) => warnOnce('Mix_SetPostMix: TODO'),
 
-  Mix_VolumeChunk: function(chunk, volume) { throw 'Mix_VolumeChunk: TODO' },
-  Mix_SetPosition: function(channel, angle, distance) { throw 'Mix_SetPosition: TODO' },
-  Mix_QuerySpec: function() { throw 'Mix_QuerySpec: TODO' },
-  Mix_FadeInChannelTimed: function() { throw 'Mix_FadeInChannelTimed' },
-  Mix_FadeOutChannel: function() { throw 'Mix_FadeOutChannel' },
+  Mix_VolumeChunk: (chunk, volume) => { throw 'Mix_VolumeChunk: TODO' },
+  Mix_SetPosition: (channel, angle, distance) => { throw 'Mix_SetPosition: TODO' },
+  Mix_QuerySpec: (frequency, format, channels) => { throw 'Mix_QuerySpec: TODO' },
+  Mix_FadeInChannelTimed: (channel, chunk, loop, ms, ticks) => { throw 'Mix_FadeInChannelTimed' },
+  Mix_FadeOutChannel: () => { throw 'Mix_FadeOutChannel' },
 
-  Mix_Linked_Version: function() { throw 'Mix_Linked_Version: TODO' },
-  SDL_SaveBMP_RW: function() { throw 'SDL_SaveBMP_RW: TODO' },
+  Mix_Linked_Version: () => { throw 'Mix_Linked_Version: TODO' },
+  SDL_SaveBMP_RW: (surface, dst, freedst) => { throw 'SDL_SaveBMP_RW: TODO' },
 
-  SDL_WM_SetIcon: function() { /* This function would set the application window icon surface, which doesn't apply for web canvases, so a no-op. */ },
-  SDL_HasRDTSC: function() { return 0; },
-  SDL_HasMMX: function() { return 0; },
-  SDL_HasMMXExt: function() { return 0; },
-  SDL_Has3DNow: function() { return 0; },
-  SDL_Has3DNowExt: function() { return 0; },
-  SDL_HasSSE: function() { return 0; },
-  SDL_HasSSE2: function() { return 0; },
-  SDL_HasAltiVec: function() { return 0; }
+  /* This function would set the application window icon surface, which doesn't apply for web canvases, so a no-op. */
+  SDL_WM_SetIcon: (icon, mask) => {},
+  SDL_HasRDTSC: () => 0,
+  SDL_HasMMX: () => 0,
+  SDL_HasMMXExt: () => 0,
+  SDL_Has3DNow: () => 0,
+  SDL_Has3DNowExt: () => 0,
+  SDL_HasSSE: () => 0,
+  SDL_HasSSE2: () => 0,
+  SDL_HasAltiVec: () => 0
 };
 
 autoAddDeps(LibrarySDL, '$SDL');
-mergeInto(LibraryManager.library, LibrarySDL);
+addToLibrary(LibrarySDL);

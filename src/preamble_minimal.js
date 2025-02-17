@@ -4,9 +4,15 @@
  * SPDX-License-Identifier: MIT
  */
 
+#if SAFE_HEAP
 #include "runtime_safe_heap.js"
+#endif
 
-#if ASSERTIONS || SAFE_HEAP
+#if USE_ASAN
+#include "runtime_asan.js"
+#endif
+
+#if ASSERTIONS
 /** @type {function(*, string=)} */
 function assert(condition, text) {
   if (!condition) throw text;
@@ -18,15 +24,11 @@ function abort(what) {
   throw {{{ ASSERTIONS ? 'new Error(what)' : 'what' }}};
 }
 
-#if SAFE_HEAP
+#if SAFE_HEAP && !WASM_BIGINT
 // Globals used by JS i64 conversions (see makeSetValue)
 var tempDouble;
 var tempI64;
 #endif
-
-var tempRet0 = 0;
-var setTempRet0 = (value) => { tempRet0 = value };
-var getTempRet0 = () => tempRet0;
 
 #if WASM != 2 && MAYBE_WASM2JS
 #if !WASM2JS
@@ -43,62 +45,62 @@ if (Module['doWasm2JS']) {
 Module['wasm'] = base64Decode('<<< WASM_BINARY_DATA >>>');
 #endif
 
-#include "runtime_functions.js"
-#include "runtime_strings.js"
-
-var HEAP8, HEAP16, HEAP32, HEAPU8, HEAPU16, HEAPU32, HEAPF32, HEAPF64;
-var wasmMemory, buffer, wasmTable;
-
+var HEAP8, HEAP16, HEAP32, HEAPU8, HEAPU16, HEAPU32, HEAPF32, HEAPF64,
+#if WASM_BIGINT
+  HEAP64, HEAPU64,
+#endif
 #if SUPPORT_BIG_ENDIAN
-var HEAP_DATA_VIEW;
+  HEAP_DATA_VIEW,
 #endif
+  wasmMemory;
 
-function updateGlobalBufferAndViews(b) {
-#if ASSERTIONS && USE_PTHREADS
-  assert(b instanceof SharedArrayBuffer, 'requested a shared WebAssembly.Memory but the returned buffer is not a SharedArrayBuffer, indicating that while the browser has SharedArrayBuffer it does not have WebAssembly threads support - you may need to set a flag');
+#include "runtime_shared.js"
+
+#if PTHREADS
+#include "runtime_pthread.js"
 #endif
-  buffer = b;
-#if SUPPORT_BIG_ENDIAN
-  HEAP_DATA_VIEW = new DataView(b);
-#endif
-  HEAP8 = new Int8Array(b);
-  HEAP16 = new Int16Array(b);
-  HEAP32 = new Int32Array(b);
-  HEAPU8 = new Uint8Array(b);
-  HEAPU16 = new Uint16Array(b);
-  HEAPU32 = new Uint32Array(b);
-  HEAPF32 = new Float32Array(b);
-  HEAPF64 = new Float64Array(b);
-}
 
 #if IMPORTED_MEMORY
-#if USE_PTHREADS
+#if PTHREADS
 if (!ENVIRONMENT_IS_PTHREAD) {
 #endif
-#if ALLOW_MEMORY_GROWTH && MAXIMUM_MEMORY != FOUR_GB
-  var wasmMaximumMemory = {{{ MAXIMUM_MEMORY >>> 16 }}};
-#else
-  var wasmMaximumMemory = {{{ INITIAL_MEMORY >>> 16}}};
+  wasmMemory =
+#if WASM_WORKERS
+    Module['mem'] ||
 #endif
-  wasmMemory = new WebAssembly.Memory({
-    'initial': {{{ INITIAL_MEMORY >>> 16 }}}
-#if USE_PTHREADS || !ALLOW_MEMORY_GROWTH || MAXIMUM_MEMORY != FOUR_GB
-    , 'maximum': wasmMaximumMemory
+    new WebAssembly.Memory({
+      'initial': {{{ INITIAL_MEMORY / WASM_PAGE_SIZE }}},
+#if SHARED_MEMORY || !ALLOW_MEMORY_GROWTH || MAXIMUM_MEMORY != FOUR_GB
+      'maximum': {{{ (ALLOW_MEMORY_GROWTH && MAXIMUM_MEMORY != FOUR_GB ? MAXIMUM_MEMORY : INITIAL_MEMORY) / WASM_PAGE_SIZE }}},
 #endif
-#if USE_PTHREADS
-    , 'shared': true
+#if SHARED_MEMORY
+      'shared': true,
+#endif
+#if MEMORY64 == 1
+      'index': 'i64',
 #endif
     });
-  updateGlobalBufferAndViews(wasmMemory.buffer);
-#if USE_PTHREADS
-} else {
-  updateGlobalBufferAndViews({{{ MODULARIZE ? 'Module.buffer' : 'wasmMemory.buffer' }}});
+#if PTHREADS
 }
-#endif // USE_PTHREADS
+#if MODULARIZE
+else {
+  wasmMemory = Module['wasmMemory'];
+}
+#endif // MODULARIZE
+#endif // PTHREADS
+
+#if PTHREADS
+if (!ENVIRONMENT_IS_PTHREAD) {
+#endif
+
+updateMemoryViews();
+
+#if PTHREADS
+}
+#endif
 #endif // IMPORTED_MEMORY
 
 #include "runtime_stack_check.js"
-#include "runtime_assertions.js"
 
 #if LOAD_SOURCE_MAP
 var wasmSourceMap;
@@ -112,19 +114,16 @@ var wasmOffsetConverter;
 
 #if EXIT_RUNTIME
 var __ATEXIT__    = []; // functions called during shutdown
+var runtimeExited = false;
 #endif
 
 #if ASSERTIONS || SAFE_HEAP || USE_ASAN
 var runtimeInitialized = false;
-
-// This is always false in minimal_runtime - the runtime does not have a concept
-// of exiting (keeping this variable here for now since it is referenced from
-// generated code)
-var runtimeExited = false;
 #endif
 
 #include "runtime_math.js"
 #include "memoryprofiler.js"
+#include "runtime_exceptions.js"
 #include "runtime_debug.js"
 
 // === Body ===

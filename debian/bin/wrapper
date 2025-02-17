@@ -4,4 +4,4 @@ set -eu
 
 BASENAME=$(basename "$0")
 
-exec "${EMSDK_PYTHON:-python3}" "/usr/share/emscripten/$BASENAME.py" "$@"
+exec "/usr/share/emscripten/$BASENAME" "$@"

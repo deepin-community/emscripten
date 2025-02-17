@@ -4,50 +4,24 @@
  * SPDX-License-Identifier: MIT
  */
 
-requireNodeFS = () => {
-  // Use nodePath as the indicator for these not being initialized,
-  // since in some environments a global fs may have already been
-  // created.
-  if (!nodePath) {
-    fs = require('fs');
-    nodePath = require('path');
-  }
-};
-
-read_ = function shell_read(filename, binary) {
-#if SUPPORT_BASE64_EMBEDDING
-  var ret = tryParseAsDataURI(filename);
-  if (ret) {
-    return binary ? ret : ret.toString();
-  }
-#endif
-  requireNodeFS();
-  filename = nodePath['normalize'](filename);
-  return fs.readFileSync(filename, binary ? undefined : 'utf8');
-};
-
 readBinary = (filename) => {
-  var ret = read_(filename, true);
-  if (!ret.buffer) {
-    ret = new Uint8Array(ret);
-  }
+  // We need to re-wrap `file://` strings to URLs. Normalizing isn't
+  // necessary in that case, the path should already be absolute.
+  filename = isFileURI(filename) ? new URL(filename) : nodePath.normalize(filename);
+  var ret = fs.readFileSync(filename);
 #if ASSERTIONS
   assert(ret.buffer);
 #endif
   return ret;
 };
 
-readAsync = (filename, onload, onerror) => {
-#if SUPPORT_BASE64_EMBEDDING
-  var ret = tryParseAsDataURI(filename);
-  if (ret) {
-    onload(ret);
-  }
-#endif
-  requireNodeFS();
-  filename = nodePath['normalize'](filename);
-  fs.readFile(filename, function(err, data) {
-    if (err) onerror(err);
-    else onload(data.buffer);
+readAsync = (filename, binary = true) => {
+  // See the comment in the `readBinary` function.
+  filename = isFileURI(filename) ? new URL(filename) : nodePath.normalize(filename);
+  return new Promise((resolve, reject) => {
+    fs.readFile(filename, binary ? undefined : 'utf8', (err, data) => {
+      if (err) reject(err);
+      else resolve(binary ? data.buffer : data);
+    });
   });
 };

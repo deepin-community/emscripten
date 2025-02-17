@@ -7,8 +7,8 @@ Bug-Debian: https://bugs.debian.org/803028
 Last-Update: 2020-10-13
 ---
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
---- a/tests/third_party/freealut/Makefile.am
-+++ b/tests/third_party/freealut/Makefile.am
+--- a/test/third_party/freealut/Makefile.am
++++ b/test/third_party/freealut/Makefile.am
 @@ -33,7 +33,7 @@
  
  # The Creative repository has some broken permissions, let's fix this.
@@ -18,8 +18,8 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  
  # Automatically reformat all C headers and sources with indent according to
  # admin/autotools/.indent.pro, but be make-friendly and take some precautions to
---- a/tests/third_party/freealut/Makefile.in
-+++ b/tests/third_party/freealut/Makefile.in
+--- a/test/third_party/freealut/Makefile.in
++++ b/test/third_party/freealut/Makefile.in
 @@ -663,7 +663,7 @@
  
  # The Creative repository has some broken permissions, let's fix this.

@@ -1,0 +1,38 @@
+Description: Switch to using standard rtd theme for sphinx
+ This should address some lintian issues and circumvent Debian bug#1000136
+ Also fix intersphinx_mapping
+Author: Julian Gilbey <jdg@debian.org>
+Forwarded: not-needed
+Last-Update: 2024-09-27
+
+--- a/site/source/conf.py
++++ b/site/source/conf.py
+@@ -34,7 +34,7 @@
+ #import sphinx_rtd_theme
+ #html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+ 
+-html_theme_path = ['_themes',]
++#html_theme_path = ['_themes',]
+ 
+ 
+ 
+@@ -155,8 +155,8 @@
+ #html_theme = 'pyramid'
+ #html_theme = 'nature'
+ #html_theme = 'haiku'
+-#html_theme = "sphinx_rtd_theme"
+-html_theme = "emscripten_sphinx_rtd_theme"
++html_theme = "sphinx_rtd_theme"
++#html_theme = "emscripten_sphinx_rtd_theme"
+ 
+ # Theme options are theme-specific and customize the look and feel of a theme
+ # further.  For a list of options available for each theme, see the
+@@ -392,7 +392,7 @@
+ 
+ 
+ # Example configuration for intersphinx: refer to the Python standard library.
+-intersphinx_mapping = {'http://docs.python.org/': None}
++intersphinx_mapping = {'python': ('/usr/share/doc/python3-doc/html/', None)}
+ 
+ #highlight_language = 'default'
+ 

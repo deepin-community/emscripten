@@ -10,35 +10,30 @@ Source: https://github.com/emscripten-core/emscripten
 Files-Excluded:
  docs/*.pdf
  src/emscripten-source-map.min.js
- site/source/_themes/emscripten_sphinx_rtd_theme/static/fonts
+ site/source/_themes/emscripten_sphinx_rtd_theme/static/css/fonts
  site/source/docs/introducing_emscripten/DEAD-TRIGGER-2-Icon1.png
  system/include/emscripten/dom_pk_codes.h
  system/include/compat/arm_neon.h
  system/lib/html5/dom_pk_codes.c
- tests/freetype/LiberationSansBold.*
- tests/poppler/*.pdf
- tests/third_party/notofont
- tests/third_party/poppler/glib/reference/html
+ test/freetype/LiberationSansBold.*
+ test/poppler/*.pdf
+ test/third_party/notofont
+ test/third_party/poppler/glib/reference/html
  third_party/jni
  third_party/ply
- third_party/websockify/include/web-socket-js/swfobject.js
- third_party/websockify/include/web-socket-js/WebSocketMain.swf
- third_party/websockify/tests
 
 Files:
  *
 Copyright:
   2010-2022  The Emscripten Authors
-License-Grant:
+License: Expat or NCSA~Mozilla
  Emscripten is available under two separate licenses,
  the MIT license
  and the University of Illinois/NCSA Open Source License.
  Both these licenses can be found in the <LICENSE> file.
-License: Expat or NCSA~Mozilla
 
 Files:
- tests/third_party/freetype/*
- tests/third_party/freetype/configure
+ test/third_party/freetype/*
 Copyright:
   2004-2006, 2009-2010  Albert Chin-A-Young
   1996-2010             David Turner <david@freetype.org>
@@ -59,12 +54,12 @@ Copyright:
   2004-2010             suzuki toshiya
   2011                  The Emscripten Authors
   1996-2010             Werner Lemberg
-License-Grant:
+License: FTL or GPL-2
  This file is part of the FreeType project,
  and may only be used, modified, and distributed
  under the terms of the FreeType project license,
  <LICENSE.TXT>.
-License-Grant:
+ .
  The FreeType 2 font engine is copyrighted work
  and cannot be used legally without a software license.
  In order to make this project usable
@@ -92,37 +87,36 @@ License-Grant:
     for programs which already use the GPL.
     Note that the FTL is incompatible with the GPL
     due to its advertisement clause.
-License: FTL or GPL-2
 Comment:
  License grant contained in code files
- references <tests/freetype/docs/FTL.TXT>,
+ references <test/freetype/docs/FTL.TXT>,
  which itself is a license grant and
- references <tests/freetype/docs/FTL.TXT>
- and <tests/freetype/docs/GPL.TXT>.
+ references <test/freetype/docs/FTL.TXT>
+ and <test/freetype/docs/GPL.TXT>.
 
 Files:
- tests/third_party/freetype/src/bdf/*
- tests/third_party/freetype/src/pcf/*
- tests/third_party/freetype/include/freetype/internal/pcftypes.h
+ test/third_party/freetype/src/bdf/*
+ test/third_party/freetype/src/pcf/*
+ test/third_party/freetype/include/freetype/internal/pcftypes.h
 Copyright:
   2000       Computing Research Labs, New Mexico State University
   2000-2010  Francesco Zappa Nardelli
 License: Expat
 
 Files:
- tests/third_party/freetype/src/tools/ftrandom/*
+ test/third_party/freetype/src/tools/ftrandom/*
 Copyright:
   2005, 2007-2008  George Williams
 License: BSD-3-clause
 
 Files:
- tests/third_party/freetype/src/tools/apinames.c
+ test/third_party/freetype/src/tools/apinames.c
 Copyright: None (in the public domain)
 License: public-domain
  This code is explicitly placed into the public domain.
 
 Files:
- tests/third_party/bullet/*
+ test/third_party/bullet/*
 Copyright:
   2011             Advanced Micro Devices, Inc.
   2005             Elsevier Inc.
@@ -140,23 +134,22 @@ Copyright:
 License: Zlib
 
 Files:
- tests/third_party/bullet/Extras/ConvexDecomposition/*
+ test/third_party/bullet/Extras/ConvexDecomposition/*
 Copyright:
   2004  Open Dynamics Framework Group
 License: BSD-3-clause~ODFG
 
 Files:
- tests/third_party/bullet/Extras/ConvexDecomposition/bestfit.cpp
+ test/third_party/bullet/Extras/ConvexDecomposition/bestfit.cpp
 Copyright:
   1998-2006  Geometric Tools, Inc. <http://www.geometrictools.com/>
   2004       Open Dynamics Framework Group
-License-Grant:
+License: BSD-3-clause~ODFG and LGPL-2.1+
  The Wild Magic Library (WM3) source code is supplied
  under the terms of the license agreement
  <http://www.geometrictools.com/License/WildMagic3License.pdf>
  and may not be copied or disclosed
  except in accordance with the terms of that agreement.
-License: BSD-3-clause~ODFG and LGPL-2.1+
 Comment:
  Referenced URL <http://www.geometrictools.com/License/WildMagic3License.pdf>
  no longer exist.
@@ -167,10 +160,10 @@ Comment:
  unversioned.
 
 Files:
- tests/third_party/bullet/src/BulletCollision/Gimpact/gim_*
+ test/third_party/bullet/src/BulletCollision/Gimpact/gim_*
 Copyright:
   2006  Francisco Leon Najera. C.C. 80087371 <projectileman@yahoo.com>
-License-Grant:
+License: BSD-3-clause or LGPL-2.1+ or Zlib
  This library is free software;
  you can redistribute it and/or modify it
  under the terms of EITHER:
@@ -187,7 +180,6 @@ License-Grant:
   3. The zlib/libpng license
      that is included with this library
      in the file <GIMPACT-LICENSE-ZLIB.TXT>.
-License: BSD-3-clause or LGPL-2.1+ or Zlib
 Comment:
  Neither of the files
  <GIMPACT-LICENSE-LGPL.TXT>, <GIMPACT-LICENSE-BSD.TXT>
@@ -195,80 +187,78 @@ Comment:
  BSD license is assumed to be BSD-3-clause.
 
 Files:
- tests/third_party/bullet/src/vectormath/sse/*
- tests/third_party/bullet/src/BulletMultiThreaded/vectormath2bullet.h
+ test/third_party/bullet/src/vectormath/sse/*
+ test/third_party/bullet/src/BulletMultiThreaded/vectormath2bullet.h
 Copyright:
   2006-2007  Sony Computer Entertainment Inc.
 License: BSD-3-clause~Sony
 
 Files:
- tests/third_party/bullet/src/BulletDynamics/Vehicle/*
+ test/third_party/bullet/src/BulletDynamics/Vehicle/*
 Copyright:
   2005  Erwin Coumans
 License: ISC~Erwin
 
 Files:
- tests/third_party/bullet/src/MiniCL/cl.h
- tests/third_party/bullet/src/MiniCL/cl_gl.h
- tests/third_party/bullet/src/MiniCL/cl_platform.h
+ test/third_party/bullet/src/MiniCL/cl.h
+ test/third_party/bullet/src/MiniCL/cl_gl.h
+ test/third_party/bullet/src/MiniCL/cl_platform.h
 Copyright:
   2008-2009  The Khronos Group Inc.
 License: Expat
 
 Files:
- tests/third_party/bullet/acinclude.m4
+ test/third_party/bullet/acinclude.m4
 Copyright:
   2003  Eric Sunshine <sunshine@sunshineco.com>
 License: LGPL-2+
 
 Files:
- tests/third_party/box2d/*
+ test/third_party/box2d/*
 Copyright:
   2006-2011  Erin Catto
 License: Zlib
 
 Files:
- tests/third_party/bullet/Extras/glui/*
- tests/third_party/box2d/glui/*
+ test/third_party/bullet/Extras/glui/*
+ test/third_party/box2d/glui/*
 Copyright:
   2005  Bill Baxter
   2004  John Kew
   1998  Paul Rademacher
   2005  William Baxter
-License-Grant:
+License: LGPL-2.1+
  This library is free software;
  you can redistribute it and/or modify it
  under the terms of the GNU Lesser General Public License
  as published by the Free Software Foundation;
  either version 2.1 of the License,
  or (at your option) any later version.
-License: LGPL-2.1+
 
 Files:
- tests/third_party/box2d/glui/glui_filebrowser.cpp
- tests/third_party/box2d/glui/glui_list.cpp
- tests/third_party/box2d/glui/glui_scrollbar.cpp
- tests/third_party/box2d/glui/glui_tree.cpp
- tests/third_party/bullet/Extras/glui/glui_filebrowser.cpp
- tests/third_party/bullet/Extras/glui/glui_list.cpp
- tests/third_party/bullet/Extras/glui/glui_scrollbar.cpp
- tests/third_party/bullet/Extras/glui/glui_tree.cpp
+ test/third_party/box2d/glui/glui_filebrowser.cpp
+ test/third_party/box2d/glui/glui_list.cpp
+ test/third_party/box2d/glui/glui_scrollbar.cpp
+ test/third_party/box2d/glui/glui_tree.cpp
+ test/third_party/bullet/Extras/glui/glui_filebrowser.cpp
+ test/third_party/bullet/Extras/glui/glui_list.cpp
+ test/third_party/bullet/Extras/glui/glui_scrollbar.cpp
+ test/third_party/bullet/Extras/glui/glui_tree.cpp
 Copyright:
   2004  John Kew
   1998  Paul Rademacher
-License-Grant:
+License: LGPL-2.1+
  This program is freely distributable without licensing fees
  and is provided without guarantee or warrantee
  expressed or implied.
  This program is -not- in the public domain.
-License: LGPL-2.1+
 Comment:
  Files contain copyright statement and a vague licensing statement.
  License is presumed to be same
  as for other files in same directories.
 
 Files:
- tests/third_party/box2d/freeglut/*
+ test/third_party/box2d/freeglut/*
  system/include/GL/freeglut_std.h
 Copyright:
   1999-2000  Pawel W. Olszta <olszta@sourceforge.net>
@@ -277,28 +267,28 @@ Copyright:
 License: Expat
 
 Files:
- tests/third_party/box2d/freeglut/freeglut_spaceball.c
+ test/third_party/box2d/freeglut/freeglut_spaceball.c
 Copyright:
   2007-2009  John Tsiombikas <nuclear@member.fsf.org>
 License: BSD-3-clause
 
 Files:
- tests/third_party/box2d/freeglut/freeglut_teapot.c
- tests/third_party/box2d/freeglut/freeglut_teapot_data.h
+ test/third_party/box2d/freeglut/freeglut_teapot.c
+ test/third_party/box2d/freeglut/freeglut_teapot_data.h
 Copyright:
   1993       Silicon Graphics, Inc.
   1999-2000  Pawel W. Olszta <olszta@sourceforge.net>
 License: Expat and NTP~SGI
 
 Files:
- tests/third_party/box2d/freeglut/freeglut_init.c
+ test/third_party/box2d/freeglut/freeglut_init.c
 Copyright:
   1985-1987, 1998  The Open Group
   1999-2000        Pawel W. Olszta <olszta@sourceforge.net>
 License: Expat and MIT-Open-Group
 
 Files:
- tests/third_party/poppler/*
+ test/third_party/poppler/*
 Copyright:
   2008        Adam Batkin <adam@batkin.net>
   2007-2011   Adrian Johnson <ajohnson@redneon.com>
@@ -420,36 +410,34 @@ Copyright:
   2008-2009   Warren Toomey <wkt@tuhs.org>
   2006        Wilfried Huss <Wilfried.Huss@gmx.at>
   2009-2011   William Bader <williambader@hotmail.com>
-License-Grant:
+License: GPL-2+
  All changes made under the Poppler project to this file
  are licensed under GPL version 2 or later
-License: GPL-2+
 
 Files:
- tests/third_party/poppler/qt4/tests/check_strings.cpp
+ test/third_party/poppler/qt4/tests/check_strings.cpp
 Copyright:
   2010-2011  Pino Toscano <pino@kde.org>
-License-Grant:
+License: GPL-2+
  This program is free software;
  you can redistribute it and/or modify it
  under the terms of the GNU General Public License
  as published by the Free Software Foundation;
  either version 2, or (at your option) any later version.
-License: GPL-2+
 
 Files:
- tests/third_party/poppler/aclocal.m4
+ test/third_party/poppler/aclocal.m4
 Copyright:
   1996-2010  Free Software Foundation, Inc.
   2004       Scott James Remnant <scott@netsplit.com>.
-License-Grant:
+License: FSFULLR and GPL-2+ with Autoconf-data exception
  This program is free software;
  you can redistribute it and/or modify it
  under the terms of the GNU General Public License
  as published by the Free Software Foundation;
  either version 2 of the License,
  or (at your option) any later version.
-License: FSFULLR and GPL-2+ with Autoconf-data exception
+ .
  As a special exception to the GNU General Public License,
  if you distribute this file
  as part of a program that contains a configuration script
@@ -459,7 +447,7 @@ License: FSFULLR and GPL-2+ with Autoconf-data exception
  that you use for the rest of that program.
 
 Files:
- tests/third_party/poppler/poppler/ABWOutputDev.cc
+ test/third_party/poppler/poppler/ABWOutputDev.cc
 Copyright:
   1998-2003  Daniel Veillard
   2006-2007  Jauco Noordzij <jauco@jauco.nl>
@@ -468,7 +456,7 @@ Copyright:
 License: X11~Veillard
 
 Files:
- tests/third_party/poppler/m4/acx_pthread.m4
+ test/third_party/poppler/m4/acx_pthread.m4
 Copyright:
   2006  Steven G. Johnson <stevenj@alum.mit.edu>
 License: GPL-2+ with Autoconf-2.0~Archive exception
@@ -493,33 +481,32 @@ License: GPL-2+ with Autoconf-2.0~Archive exception
  to apply to your modified version as well.
 
 Files:
- tests/third_party/poppler/fontconfig/fontconfig.h
+ test/third_party/poppler/fontconfig/fontconfig.h
 Copyright:
   2001  Keith Packard
 License: HPND-sell-variant~Packard
 
 Files:
- tests/third_party/poppler/poppler/CairoRescaleBox.cc
+ test/third_party/poppler/poppler/CairoRescaleBox.cc
 Copyright:
   2009  Mozilla Corporation
 License: HPND-sell-variant~Mozilla
 
 Files:
- tests/third_party/poppler/poppler/strtok_r.cpp
+ test/third_party/poppler/poppler/strtok_r.cpp
 Copyright:
   1991, 1993, 1996-2002, 2004  Free Software Foundation, Inc.
-License-Grant:
+License: LGPL-2.1+
  The GNU C Library is free software;
  you can redistribute it and/or modify it
  under the terms of the GNU Lesser General Public License
  as published by the Free Software Foundation;
  either version 2.1 of the License,
  or (at your option) any later version.
-License: LGPL-2.1+
 
 Files:
- tests/third_party/poppler/cmake/modules/*
- tests/third_party/poppler/ConfigureChecks.cmake
+ test/third_party/poppler/cmake/modules/*
+ test/third_party/poppler/ConfigureChecks.cmake
 Copyright:
   2008       Adrian Page, <adrian@pagenet.plus.com>
   2008       Albert Astals Cid, <aacid@kde.org>
@@ -531,13 +518,7 @@ Copyright:
 License: BSD-3-clause
 
 Files:
- tests/third_party/poppler/m4/iconv.m4
-Copyright:
-  2000-2002, 2007  Free Software Foundation, Inc.
-License: FSFULLR
-
-Files:
- tests/third_party/poppler/m4/introspection.m4
+ test/third_party/poppler/m4/introspection.m4
 Copyright:
   2009  Johan Dahlin
 License: FSFULLR~author
@@ -560,15 +541,14 @@ Files:
  system/include/SDL/SDL.h
 Copyright:
   1997-2011  Sam Lantinga <slouken@libsdl.org>
-License-Grant:
+License: LGPL-2 and Zlib
  This library is distributed under GNU LGPL version 2,
  which can be found in the file  "COPYING".
  This license allows you to use SDL freely in commercial programs
  as long as you link with the dynamic library.
-License: LGPL-2 and Zlib
 
 Files:
- tests/third_party/openjpeg/*
+ test/third_party/openjpeg/*
 Copyright:
   2007       Callum Lerwick <seg@haxxed.com>
   2002-2007  Communications and Remote Sensing Laboratory,
@@ -584,49 +564,45 @@ Copyright:
 License: BSD-2-clause
 
 Files:
- tests/third_party/openjpeg/common/getopt.c
+ test/third_party/openjpeg/common/getopt.c
 Copyright:
   1987, 1993-1994  The Regents of the University of California
 License: BSD-4-clause-UC
 
 Files:
- tests/third_party/openjpeg/codec/windirent.h
+ test/third_party/openjpeg/codec/windirent.h
 Copyright:
   1998-2002  Toni Ronkko <tronkko@messi.uku.fi>
 License: Expat
 
 Files:
- tests/third_party/freetype/src/gzip/*
- tests/third_party/zlib/*
- system/include/zconf.h
- system/include/zlib.h
- tests/third_party/zlib/Makefile.in
- tests/third_party/zlib/configure
+ test/third_party/freetype/src/gzip/*
+ test/third_party/zlib/*
  tools/ports/zlib.py
 Copyright:
   1995-2016  Jean-loup Gailly <jloup@gzip.org>
   1995-2016  Mark Adler <madler@alumni.caltech.edu>
 License: Zlib
 Comment:
- Files <tests/zlib/Makefile.in> and <tests/zlib/configure>
+ Files <test/zlib/Makefile.in> and <test/zlib/configure>
  lack copyright and license,
  and is assumed to have same copyright and license
  as generally for that directory.
 
 Files:
- tests/third_party/freetype/src/gzip/Jamfile
- tests/third_party/freetype/src/gzip/ftgzip.c
- tests/third_party/freetype/src/gzip/rules.mk
+ test/third_party/freetype/src/gzip/Jamfile
+ test/third_party/freetype/src/gzip/ftgzip.c
+ test/third_party/freetype/src/gzip/rules.mk
 Copyright:
   2001-2006, 2009-2010  David Turner <david@freetype.org>
   2001-2006, 2009-2010  Robert Wilhelm
   2001-2006, 2009-2010  Werner Lemberg
-License-Grant:
+License: FTL or GPL-2
  This file is part of the FreeType project,
  and may only be used, modified, and distributed
  under the terms of the FreeType project license,
  <LICENSE.TXT>.
-License-Grant:
+ .
  The FreeType 2 font engine is copyrighted work
  and cannot be used legally without a software license.
  In order to make this project usable
@@ -654,13 +630,12 @@ License-Grant:
     for programs which already use the GPL.
     Note that the FTL is incompatible with the GPL
     due to its advertisement clause.
-License: FTL or GPL-2
 Comment:
  License grant contained in code files
- references <tests/freetype/docs/FTL.TXT>,
+ references <test/freetype/docs/FTL.TXT>,
  which itself is a license grant and
- references <tests/freetype/docs/FTL.TXT>
- and <tests/freetype/docs/GPL.TXT>.
+ references <test/freetype/docs/FTL.TXT>
+ and <test/freetype/docs/GPL.TXT>.
 
 Files:
  system/lib/libc/musl/*
@@ -912,17 +887,17 @@ License: FSFULLR~Sun and ISC
 
 Files:
  third_party/closure-compiler/node-externs/*
- tests/embind/underscore-externs.js
+ test/embind/underscore-externs.js
 Copyright:
   2012  The Closure Compiler Authors.
-License-Grant:
+License: Apache-2.0
+Comment:
  Licensed under the Apache License, Version 2.0
  (the "License");
  you may not use this file
  except in compliance with the License.
  You may obtain a copy of the License
  at <http://www.apache.org/licenses/LICENSE-2.0>
-License: Apache-2.0
 
 Files:
  third_party/terser/*
@@ -931,69 +906,14 @@ Copyright:
 License: BSD-2-clause
 
 Files:
- third_party/websockify/*
-Copyright:
-  2010-2013  Joel Martin
-License-Grant:
- Licensed under LGPL version 3
- (see docs/LICENSE.LGPL-3)
-License: LGPL-3
-
-Files:
- third_party/websockify/include/base64.js
- third_party/websockify/include/websock.js
- third_party/websockify/include/webutil.js
-Copyright:
-  2012  Joel Martin
-License-Grant:
- Licensed under MPL 2.0
- (see LICENSE.txt)
-License: MPL-2.0
-
-Files:
- third_party/websockify/include/util.js
-Copyright:
-  2012  Joel Martin
-        the Mozilla foundation
-License-Grant:
- Licensed under MPL 2.0
- (see LICENSE.txt)
-License-Grant:
- This prototype is provided by the Mozilla foundation
- and is distributed under the MIT license.
-License: Expat and MPL-2.0
-Comment:
- One copyright holder assumed from license grant.
-
-Files:
- third_party/websockify/include/VT100.js
-Copyright:
-  Frank Bi <bi@zompower.tk>
-License-Grant:
- Released under the GNU LGPL v2.1,
- by Frank Bi <bi@zompower.tk>
-License: LGPL-2.1
-Comment:
- Copyright holder assumed from license grant.
-
-Files:
- third_party/websockify/include/web-socket-js/web_socket.js
-Copyright:
-  Hiroshi Ichikawa <http://gimite.net/en/>
-License-Grant:
- License: New BSD License
-License: BSD-3-clause
-
-Files:
  system/lib/libunwind/*
 Copyright:
   2005       Free Standards Group
   2009-2019  the contributors listed in CREDITS.TXT
   1992-1993  UNIX International, Inc.
-License-Grant:
+License: Expat or NCSA~LLVM
  This file is dual licensed
  under the MIT and the University of Illinois Open Source Licenses.
-License: Expat or NCSA~LLVM
 Comment:
  Referenced file <CREDITS.TXT> is missing from source.
  Arguably that is harmless,
@@ -1010,11 +930,11 @@ Copyright:
   Howard Hinnant <hhinnant@apple.com>
   Joerg Sonnenberger <joerg@NetBSD.org>
   Matt Thomas <matt@NetBSD.org>
-License-Grant:
+License: Apache-2.0 with LLVM exception
  Part of the LLVM Project,
  under the Apache License v2.0 with LLVM Exceptions.
  See <https://llvm.org/LICENSE.txt> for license information.
-License: Apache-2.0 with LLVM exception
+ .
  As an exception,
  if, as a result of your compiling your source code,
  portions of this Software are embedded
@@ -1087,11 +1007,11 @@ Copyright:
   Xing Xue <xingxue@ca.ibm.com>
   Zhihao Yuan <lichray@gmail.com>
   Jeffrey Yasskin <jyasskin@gmail.com>, <jyasskin@google.com>
-License-Grant:
+License: Apache-2.0 with LLVM exception
  Part of the LLVM Project,
  under the Apache License v2.0 with LLVM Exceptions.
  See <https://llvm.org/LICENSE.txt> for license information.
-License: Apache-2.0 with LLVM exception
+ .
  As an exception,
  if, as a result of your compiling your source code,
  portions of this Software are embedded
@@ -1142,11 +1062,11 @@ Copyright:
   Jon Roelofs <jroelofs@jroelofs.com>
   Nico Weber <thakis@chromium.org>
   Albert J. Wong <ajwong@google.com>
-License-Grant:
+License: Apache-2.0 with LLVM exception
  Part of the LLVM Project,
  under the Apache License v2.0 with LLVM Exceptions.
  See <https://llvm.org/LICENSE.txt> for license information.
-License: Apache-2.0 with LLVM exception
+ .
  As an exception,
  if, as a result of your compiling your source code,
  portions of this Software are embedded
@@ -1180,176 +1100,95 @@ Comment:
  which contains the above license and exception.
 
 Files:
- system/lib/libcxx/src/support/solaris/mbsnrtowcs.inc
- system/lib/libcxx/src/support/solaris/wcsnrtombs.inc
-Copyright:
-  2002-2004  Tim J. Robbins
-License: BSD-2-Clause
-
-Files:
- system/lib/compiler-rt/lib/asan/asan_mapping_emscripten.h
- system/lib/compiler-rt/lib/lsan/lsan_common_emscripten.cpp
- system/lib/compiler-rt/lib/sanitizer_common/sanitizer_stacktrace_emscripten.cpp
- system/lib/compiler-rt/lib/sanitizer_common/sanitizer_symbolizer_emscripten.cpp
-Copyright:
-  2009-2019  Craig van Vliet <cvanvliet@auroraux.org>
-  2009-2019  Edward O'Callaghan <eocallaghan@auroraux.org>
-  2009-2019  Guan-Hong Liu <koviankevin@hotmail.com>
-  2009-2019  Howard Hinnant <hhinnant@apple.com>
-  2009-2019  Joerg Sonnenberger <joerg@NetBSD.org>
-  2009-2019  Matt Thomas <matt@NetBSD.org>
-License-Grant:
- This file is distributed
- under the University of Illinois Open Source License.
- See <LICENSE.TXT> for details.
-License: NCSA~LLVM
-Comment:
- The files contain no copyright statements.
- Copyright holders are presumed to be those
- listed in file <system/lib/compiler-rt/CREDITS.TXT>,
- based on statements in File <system/lib/compiler-rt/LICENSE.TXT>.
- .
- File <system/lib/compiler-rt/LICENSE.TXT>
- contains the NCSA~LLVM license.
-
-Files:
- system/lib/compiler-rt/lib/asan/asan_emscripten.cpp
- system/lib/compiler-rt/lib/builtins/extendhftf2.c
- system/lib/compiler-rt/lib/builtins/trunctfhf2.c
- system/lib/compiler-rt/lib/ubsan_minimal/ubsan_minimal_handlers.cpp
- system/lib/compiler-rt/stack_ops.s
-Copyright:
-  2009-2019  Craig van Vliet <cvanvliet@auroraux.org>
-  2009-2019  Edward O'Callaghan <eocallaghan@auroraux.org>
-  2009-2019  Guan-Hong Liu <koviankevin@hotmail.com>
-  2009-2019  Howard Hinnant <hhinnant@apple.com>
-  2009-2019  Joerg Sonnenberger <joerg@NetBSD.org>
-  2009-2019  Matt Thomas <matt@NetBSD.org>
-License-Grant:
- The compiler_rt library is dual licensed
- under both the University of Illinois "BSD-Like" license
- and the MIT license.
- As a user of this code you may choose to use it
- under either license.
- As a contributor, you agree
- to allow your code to be used under both.
-License-Grant:
- This file is dual licensed
- under the MIT
- and the University of Illinois Open Source Licenses.
- See <LICENSE.TXT> for details.
-License: Expat or NCSA~LLVM
-Comment:
- The files contain no copyright statements.
- Copyright holders are presumed to be those
- listed in file <system/lib/compiler-rt/CREDITS.TXT>,
- based on statements in File <system/lib/compiler-rt/LICENSE.TXT>.
- .
- Some files contain no licensing statements.
- License-Grant and License is presumed
- based on statements in File <system/lib/compiler-rt/LICENSE.TXT>.
-
-Files:
- tests/sockets/ws/*
-Copyright:
-  2011  Einar Otto Stangvik <einaros@gmail.com>
-License-Grant:
- MIT Licensed
-License: Expat
-
-Files:
- tests/third_party/enet/*
+ test/third_party/enet/*
 Copyright:
   2002-2011  Lee Salzman
 License: Expat
 Comment:
  The files contain no copyright or licensing statements.
  Copyright and licensing assumed
- from file <tests/third_party/enet/LICENSE>.
+ from file <test/third_party/enet/LICENSE>.
 
 Files:
- tests/third_party/giflib/*
+ test/third_party/giflib/*
 Copyright:
   1989  Gershon Elber
 License: Expat
 Comment:
  The files contain no formal copyright statement.
  Copyright assumed from code string VersionStr
- in file <tests/third_party/giflib/giftext.c>.
+ in file <test/third_party/giflib/giftext.c>.
 
 Files:
- tests/third_party/glbook/*
+ test/third_party/glbook/*
 Copyright:
   2011  Jarkko Vatjus-Anttila <jvatjusanttila@gmail.com>
-License-Grant:
- License: MIT
 License: Expat
+ License: MIT
 Comment:
  The files contain no formal copyright statement.
  Copyright assumed to be same as (seemingly) the author
- listed in file <tests/third_party/glbook/README.linux>.
+ listed in file <test/third_party/glbook/README.linux>.
  .
  License assumed to be the Expat flavor of MIT licenses.
 
 Files:
- tests/third_party/lua/*
+ test/third_party/lua/*
 Copyright:
   1994-2013  Lua.org, PUC-Rio
-License-Grant:
- See Copyright Notice in lua.h
 License: Expat
+ See Copyright Notice in lua.h
 Comment:
  Most of the files contain no copyright or licensing statements,
  but some contain the comment "See Copyright Notice in lua.h".
- File <tests/third_party/lua/src/lua.h>
+ File <test/third_party/lua/src/lua.h>
  contains above copyright and licensing.
 
 Files:
- tests/third_party/lua/scimark.lua
+ test/third_party/lua/scimark.lua
 Copyright:
   2006-2010  Mike Pall
 License: Expat
 
 Files:
- tests/third_party/freealut/*
+ test/third_party/freealut/*
 Copyright:
   Steve Baker <sjbaker1@airmail.net>
   Sven Panne <sven.panne@aedion.de>
   Erik Hofman <erik@ehofman.com>
   Prakash Punnoor <prakash@punnoor.de>
-License-Grant:
+License: LGPL-2+
  These libraries are offered as OpenSource freeware
  under the provisions of the GNU Library Public License
  (LGPL).
-License: LGPL-2+
 Comment:
  Copyright holders are presumed to be those
- listed in file <tests/third_party/freealut/AUTHORS>,
+ listed in file <test/third_party/freealut/AUTHORS>,
  .
- License stated in file <tests/third_party/freealut/README>
+ License stated in file <test/third_party/freealut/README>
  is assumed to apply generally within and below that subdirectory.
  .
- File <tests/third_party/freealut/test_suite/file1.wav>
+ File <test/third_party/freealut/test_suite/file1.wav>
  has an embedded note stating copyright,
  but that is ignored as it seems to be for the tool used,
  not for the produced audio file.
 
 Files:
- tests/third_party/lzma/*
+ test/third_party/lzma/*
 Copyright:
   None (in the public domain)
 License: public-domain
  Igor Pavlov : Public domain
 
 Files:
- tests/third_party/coremark/*
+ test/third_party/coremark/*
 Copyright:
   2009,2018  Embedded Microprocessor Benchmark Consortium (EEMBC)
 License: Apache-2.0
 
 Files:
- tests/third_party/cube2hash/*
- tests/third_party/cubescript/*
+ test/third_party/cube2hash/*
+ test/third_party/cubescript/*
 Copyright:
   2001-2010  Lee Salzman
   2001-2010  Mike Dysart
@@ -1360,15 +1199,14 @@ Copyright:
 License: Zlib
 
 Files:
- tests/cube2hash/hashstring.cpp
+ test/third_party/cube2hash/hashstring.cpp
 Copyright:
   2012  The Emscripten Authors
-License-Grant:
+License: Expat or NCSA~Mozilla
  Emscripten is available under two separate licenses,
  the MIT license
  and the University of Illinois/NCSA Open Source License.
  Both these licenses can be found in the <LICENSE> file.
-License: Expat or NCSA~Mozilla
 
 Files:
  third_party/leb128/*
@@ -1377,185 +1215,126 @@ Copyright:
 License: Expat
 
 Files:
- */configure
-Copyright:
-  1992-2012  Free Software Foundation, Inc.
-License: FSFUL~configure
-
-Files:
- */aclocal.m4
- */iconv.m4
- */libtool.m4
- */ltoptions.m4
- */ltsugar.m4
- */ltversion.m4
- */lt~obsolete.m4
-Copyright:
-  1996-2011  Free Software Foundation, Inc.
-License: FSFULLR
-
-Files:
- */Makefile.in
-Copyright:
-  1994-2009  Free Software Foundation, Inc.
-License: FSFULLR~Makefile.in
-
-Files:
- */compile
- */missing
- */config.guess
- */config.sub
- */depcomp
-Copyright:
-  1992-2011  Free Software Foundation, Inc.
-License-Grant:
- This file is free software;
- you can redistribute it and/or modify it
- under the terms of the GNU General Public License
- as published by the Free Software Foundation;
- either version 2 of the License,
- or (at your option) any later version.
-License: GPL-2+ with Autoconf-data exception
- As a special exception to the GNU General Public License,
- if you distribute this file
- as part of a program that contains a configuration script
- generated by Autoconf,
- you may include it
- under the same distribution terms
- that you use for the rest of that program.
-
-Files:
- */ltmain.sh
-Copyright:
-  1996-2001, 2003-2011  Free Software Foundation, Inc.
-License-Grant:
- GNU Libtool is free software;
- you can redistribute it and/or modify it
- under the terms of the GNU General Public License
- as published by the Free Software Foundation;
- either version 2 of the License,
- or (at your option) any later version.
-License: GPL-2+ with Libtool exception
- As a special exception to the GNU General Public License,
- if you distribute this file as part of a program or library
- that is built using GNU Libtool,
- you may include this file
- under the same distribution terms
- that you use for the rest of that program.
-
-Files:
- */install-sh
-Copyright:
-  1994  X Consortium
-License: X11
-
-Files:
- src/Fetch.js
- src/IDBStore.js
- src/URIUtils.js
  src/arrayUtils.js
  src/base64Decode.js
- src/compiler.js
+ src/base64Utils.js
+ src/compiler.mjs
  src/cpuprofiler.js
  src/deterministic.js
  src/emrun_postjs.js
  src/emrun_prejs.js
+ src/Fetch.js
  src/growableHeap.js
- src/headless.js
  src/headlessCanvas.js
- src/jsifier.js
- src/library.js
- src/library_asmfs.js
+ src/headless.js
+ src/IDBStore.js
+ src/jsifier.mjs
+ src/library_addfunction.js
  src/library_async.js
+ src/library_atomic.js
+ src/library_autodebug.js
  src/library_bootstrap.js
  src/library_browser.js
- src/library_cyberdwarf.js
+ src/library_ccall.js
+ src/library_dylink.js
  src/library_egl.js
- src/library_emmalloc.js
+ src/library_eventloop.js
  src/library_exceptions.js
  src/library_exceptions_stub.js
  src/library_exports.js
+ src/library_fetchfs.js
  src/library_fetch.js
  src/library_formatString.js
  src/library_fs.js
+ src/library_fs_shared.js
+ src/library_getvalue.js
  src/library_glemu.js
  src/library_glew.js
  src/library_glfw.js
  src/library_glut.js
  src/library_html5.js
  src/library_html5_webgl.js
+ src/library_icasefs.js
  src/library_idbfs.js
  src/library_idbstore.js
  src/library_int53.js
+ src/library.js
+ src/library_jsfilefs.js
+ src/library_legacy.js
  src/library_lz4.js
+ src/library_makeDynCall.js
  src/library_memfs.js
  src/library_nodefs.js
+ src/library_nodepath.js
  src/library_noderawfs.js
  src/library_openal.js
+ src/library_opfs.js
  src/library_path.js
  src/library_pipefs.js
+ src/library_promise.js
  src/library_proxyfs.js
  src/library_pthread.js
  src/library_pthread_stub.js
  src/library_sdl.js
- src/library_signals.js
  src/library_sockfs.js
- src/library_stack.js
  src/library_stack_trace.js
  src/library_strings.js
  src/library_syscall.js
+ src/library_time.js
  src/library_trace.js
  src/library_tty.js
  src/library_uuid.js
  src/library_wasi.js
- src/library_webgl.js
+ src/library_wasmfs_fetch.js
+ src/library_wasmfs.js
+ src/library_wasmfs_jsimpl.js
+ src/library_wasmfs_node.js
+ src/library_wasmfs_opfs.js
+ src/library_wasm_worker.js
  src/library_webgl2.js
+ src/library_webgl.js
  src/library_webgpu.js
  src/library_websocket.js
+ src/library_wget.js
  src/library_workerfs.js
  src/library_xlib.js
  src/memoryprofiler.js
- src/minimal_runtime_worker_externs.js
- src/modules.js
+ src/modules.mjs
  src/node_shell_read.js
- src/parseTools.js
+ src/parseTools_legacy.mjs
+ src/parseTools.mjs
  src/postamble.js
  src/postamble_minimal.js
  src/preamble.js
  src/preamble_minimal.js
  src/proxyClient.js
  src/proxyWorker.js
- src/runtime.js
- src/runtime_assertions.js
+ src/runtime_asan.js
  src/runtime_debug.js
- src/runtime_functions.js
+ src/runtime_exceptions.js
  src/runtime_init_memory.js
  src/runtime_math.js
+ src/runtime_pthread.js
  src/runtime_safe_heap.js
+ src/runtime_shared.js
  src/runtime_stack_check.js
- src/runtime_strings.js
- src/runtime_strings_extra.js
- src/settings.js
  src/settings_internal.js
  src/shell.js
  src/shell_minimal.js
- src/shell_pthreads.js
  src/source_map_support.js
- src/support.js
  src/threadprofiler.js
- src/utility.js
+ src/URIUtils.js
+ src/utility.mjs
  src/wasm2js.js
  src/wasm_offset_converter.js
  src/webGLClient.js
  src/webGLWorker.js
  src/web_or_worker_shell_read.js
- src/worker.js
- tests/hello_world.js
+ test/hello_world.js
 Copyright:
   2010-2021  The Emscripten Authors
-License-Grant:
- SPDX-License-Identifier: MIT
 License: Expat
+ SPDX-License-Identifier: MIT
 
 Files:
  system/include/X11/Xfuncproto.h
@@ -1568,7 +1347,7 @@ Files:
  system/include/X11/extensions/Xext.h
  system/include/X11/extensions/extutil.h
  system/include/X11/extensions/shm.h
- tests/third_party/freetype/src/pcf/pcfutil.c
+ test/third_party/freetype/src/pcf/pcfutil.c
 Copyright:
   1984-1987, 1989-1991, 1994, 1998  The Open Group
 License: MIT-Open-Group
@@ -1604,12 +1383,12 @@ Copyright:
 License: Khronos
 
 Files:
- tests/full_es2_sdlproc.c
- tests/hello_world_gles.c
- tests/hello_world_gles_deriv.c
- tests/hello_world_gles_full.c
- tests/hello_world_gles_full_944.c
- tests/hello_world_gles_proxy.c
+ test/full_es2_sdlproc.c
+ test/hello_world_gles.c
+ test/hello_world_gles_deriv.c
+ test/hello_world_gles_full.c
+ test/hello_world_gles_full_944.c
+ test/hello_world_gles_proxy.c
 Copyright:
   1999-2001  Brian Paul
 License: Expat
@@ -1623,32 +1402,31 @@ Copyright:
 License: Apache-2.0
 
 Files:
- tests/third_party/libiberty/ansidecl.h
- tests/third_party/libiberty/libiberty.h
+ test/third_party/libiberty/ansidecl.h
+ test/third_party/libiberty/libiberty.h
 Copyright:
   1991-1996, 1998-2001  Free Software Foundation, Inc.
-License-Grant:
+License: GPL-2+
  This program is free software;
  you can redistribute it and/or modify it
  under the terms of the GNU General Public License
  as published by the Free Software Foundation;
  either version 2 of the License,
  or (at your option) any later version.
-License: GPL-2+
 
 Files:
- tests/third_party/libiberty/cp-demangle.h
- tests/third_party/libiberty/cp-demangle.c
+ test/third_party/libiberty/cp-demangle.h
+ test/third_party/libiberty/cp-demangle.c
 Copyright:
   2003-2005  Free Software Foundation, Inc.
-License-Grant:
+License: GPL-2+ with GCC-exception-2.0 exception
  This program is free software;
  you can redistribute it and/or modify it
  under the terms of the GNU General Public License
  as published by the Free Software Foundation;
  either version 2 of the License,
  or (at your option) any later version.
-License: GPL-2+ with GCC-exception-2.0 exception
+ .
  In addition to the permissions in the GNU General Public License,
  the Free Software Foundation gives you unlimited permission
  to link the compiled version of this file
@@ -1669,30 +1447,29 @@ Copyright:
 License: misc~SGI
 
 Files:
- tests/float+.c
+ test/float+.c
 Copyright:
   2007, 2009-2010  Free Software Foundation, Inc.
-License-Grant:
+License: LGPL-2+
  This program is free software;
  you can redistribute it and/or modify it
  under the terms of the GNU Lesser General Public License
  as published by the Free Software Foundation;
  either version 2,
  or (at your option) any later version.
-License: LGPL-2+
 
 Files:
- tests/third_party/libiberty/demangle.h
+ test/third_party/libiberty/demangle.h
 Copyright:
   1992-1998, 2000-2005, 2007  Free Software Foundation, Inc.
-License-Grant:
+License: LGPL-2+ with GCC-exception-2.0 exception
  This program is free software;
  you can redistribute it and/or modify it
  under the terms of the GNU Library General Public License
  as published by the Free Software Foundation;
  either version 2,
  or (at your option) any later version.
-License: LGPL-2+ with GCC-exception-2.0 exception
+ .
  In addition to the permissions
  in the GNU Library General Public License,
  the Free Software Foundation gives you unlimited permission
@@ -1705,29 +1482,17 @@ License: LGPL-2+ with GCC-exception-2.0 exception
  and distribution when not linked into a combined executable.)
 
 Files:
- cmake/Modules/CMakeSystemSpecificInformation.cmake
  cmake/Modules/CheckTypeSize.cmake
  cmake/Modules/TestBigEndian.cmake
 Copyright:
   2002-2009  Kitware, Inc.
-License-Grant:
- Distributed under the OSI-approved BSD License
- (the "License");
- see accompanying file Copyright.txt for details.
-Copyright:
-  2000-2011  Insight Software Consortium
-  2000-2014  Kitware, Inc.
 License: BSD-3-clause~Kitware
-
-Files:
- src/base64Utils.js
-Copyright:
-  None (in the public domain)
-License: public-domain
- This code was written by Tyler Akins
- and has been placed in the public domain.
- It would be nice if you left this header intact.
- Base64 code from Tyler Akins -- <http://rumkin.com>
+Comment:
+ File says:
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
+ License downloaded from
+ https://github.com/Kitware/CMake/blob/master/Copyright.txt
 
 Files:
  system/lib/dlmalloc.c
@@ -1742,15 +1507,15 @@ License: public-domain
  to <dl@cs.oswego.edu>
 
 Files:
- tests/havlak.cpp
+ test/havlak.cpp
 Copyright:
   2011  Google Inc.
-License-Grant:
+License: Apache-2.0
+Comment:
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License
  at <http://www.apache.org/licenses/LICENSE-2.0>
-License: Apache-2.0
 
 Files:
  system/include/webgpu/webgpu.h
@@ -1759,13 +1524,10 @@ Copyright:
 License: BSD-3-clause
 
 Files:
- tests/test_boost_graph.cpp
+ test/test_boost_graph.cpp
 Copyright:
   Packt Publishing
 License: BSL-1.0
-Reference:
- <https://github.com/apolukhin/Boost-Cookbook/blob/second_edition/Chapter12/01_graph/main.cpp>
- <https://github.com/apolukhin/Boost-Cookbook/blob/second_edition/Readme.md>
 Comment:
  Source contains no copyright statement,
  but a reference to source at
@@ -1780,9 +1542,15 @@ Files:
  third_party/socket.io.js
 Copyright:
   2011  LearnBoost <dev@learnboost.com>
-License-Grant:
- MIT Licensed
-License: Expat
+  2007-2015 The SWFObject team
+  Hiroshi Ichikawa <http://gimite.net/en/>
+License: Expat and BSD-3-clause
+ "MIT Licensed" by LearnBoost (majority of file)
+ "MIT License" by The SWFObject team (SWFObject)
+ "New BSD License" by Hiroshi Ichikawa (Websockets library)
+Comment:
+ SWFObject is embedded in this script
+ A websocket library by Hiroshi Ichikawa is also embedded
 
 Files:
  third_party/wrtcp.js
@@ -1795,10 +1563,11 @@ Files:
  docs/paper.tex
 Copyright:
   2011  Alon Zakai
-License-Grant:
+License: CC-by-sa-3.0
+Comment:
+ File contains:
  License: Creative Commons Attribution-ShareAlike (CC BY-SA),
  <http://creativecommons.org/licenses/by-sa/3.0/>
-License: CC-by-sa-3.0
 
 Files:
  system/include/GL/gl.h
@@ -1815,14 +1584,14 @@ Copyright:
 License: Expat
 
 Files:
- tests/embind/underscore-1.4.2.js
+ test/embind/underscore-1.4.2.js
 Copyright:
   2009-2012  DocumentCloud Inc.
   2009-2012  Jeremy Ashkenas
 License: Expat
 
 Files:
- src/mini-lz4.js
+ third_party/mini-lz4.js
 Copyright:
   2012  Pierre Curto
 License: Expat
@@ -1834,30 +1603,27 @@ Copyright:
 License: Expat
 
 Files:
- tests/raytrace.cpp
+ test/third_party/raytrace.cpp
 Copyright:
   2005  thierry berger-perrin <tbptbp@gmail.com>
-License-Grant:
- this code is released under the GNU Public License.
 License: GPL-1+
+ this code is released under the GNU Public License.
 
 Files:
- tests/benchmark/linpack2.c
+ test/benchmark/linpack2.c
 Copyright:
   John Burkardt
-License-Grant:
- This code is distributed under the GNU LGPL license.
 License: LGPL-2+
+ This code is distributed under the GNU LGPL license.
 Comment:
  Author is assumed to be copyright holder.
 
 Files:
- tests/perspective.c
+ test/perspective.c
 Copyright:
   2000  Michael Vance
-License-Grant:
- Distributed under terms of the LGPL.
 License: LGPL-2+
+ Distributed under terms of the LGPL.
 
 Files:
  tools/ports/libpng.py
@@ -1868,14 +1634,13 @@ Copyright:
   1995-1996                   Guy Eric Schalnat, Group 42, Inc.
   2015                        The Emscripten Authors
   1995-2019                   The PNG Reference Library Authors
-License-Grant:
+License: (Expat or NCSA~Mozilla) and libpng-2.0
  Emscripten is available under two separate licenses,
  the MIT license
  and the University of Illinois/NCSA Open Source License.
  Both these licenses can be found in the <LICENSE> file.
-License-Grant:
+ .
  This code is released under the libpng license.
-License: (Expat or NCSA~Mozilla) and libpng-2.0
 Comment:
  Code contains both libpng and libpng-2.0 licenses,
  but stated version numbers indicate that only libpng-2.0 has effect.
@@ -1897,12 +1662,11 @@ Copyright:
   Reuben Morais
   Ryan VanderMeulen
   Tareq Khandaker
-License-Grant:
+License: MPL-2.0
  This Source Code Form is subject to the terms
  of the Mozilla Public License, v. 2.0.
  If a copy of the MPL was not distributed with this file,
  You can obtain one at <http://mozilla.org/MPL/2.0/>.
-License: MPL-2.0
 Comment:
  File contains no copyright statement,
  but hints about its origin.
@@ -1925,54 +1689,48 @@ License: SGI-B-2.0
 Files:
  site/source/_themes/emscripten_sphinx_rtd_theme/*
 Copyright:
-  2007-2013  the Sphinx team
-License-Grant:
- :license: BSD, see LICENSE for details.
-License: BSD-3-clause
-Comment:
- File <LICENSE> is missing.
- License assumed to be BSD-3-clause
- .
- See also: <https://github.com/emscripten-core/emscripten/issues/12794>
+  2013 Dave Snider
+License: Expat
 
 Files:
- tests/third_party/libpng/pngtest.c
+ test/third_party/libpng/pngtest.c
 Copyright:
   1995-1996  Guy Eric Schalnat, Group 42, Inc.
   1996-1997  Andreas Dilger
   1998-2015  Glenn Randers-Pehrson
-License-Grant:
- This code is released under the libpng license.
 License: libpng-2.0
+ This code is released under the libpng license.
 Comment:
  License is assumed to be libpng-2.0.
  .
  See also: <https://github.com/emscripten-core/emscripten/issues/14687>
 
 Files:
- tests/bzip2_test.c
+ test/bzip2_test.c
 Copyright:
   1996-2010  Julian Seward <jseward@bzip.org>
-License-Grant:
- This file is part of bzip2/libbzip2,
- a program and library for lossless, block-sorting data compression.
- .
- bzip2/libbzip2 version 1.0.6 of 6 September 2010
- Copyright (C) 1996-2010 Julian Seward <jseward@bzip.org>
- .
- Please read the WARNING, DISCLAIMER and PATENTS sections
- in the  README file.
- .
- This program is released under the terms
- of the license contained in the file LICENSE.
 License: bzip2-1.0.6
 Comment:
+ File says:
+ .
+   This file is part of bzip2/libbzip2,
+   a program and library for lossless, block-sorting data compression.
+ .
+   bzip2/libbzip2 version 1.0.6 of 6 September 2010
+   Copyright (C) 1996-2010 Julian Seward <jseward@bzip.org>
+ .
+   Please read the WARNING, DISCLAIMER and PATENTS sections
+   in the  README file.
+ .
+   This program is released under the terms
+   of the license contained in the file LICENSE.
+ .
  Referenced file <LICENSE> is missing from source.
  License is presumed to be same
  as generally for bzip2/libbzip2 version 1.0.6.
 
 Files:
- tests/third_party/sqlite/sqlite3.c
+ test/third_party/sqlite/sqlite3.c
 Copyright:
   None (in the public domain)
 License: public-domain
@@ -1985,47 +1743,31 @@ License: public-domain
    May you share freely, never taking more than you give.
 
 Files:
- tests/sounds/*
+ test/sounds/*
 Copyright:
   2009  Wildfire Games.
-License-Grant:
+License: CC-by-sa-3.0
+Comment:
+ Reference: test/sounds/LICENSE.txt
+ .
  These files are licensed
  under the Creative Commons Attribution-Share Alike 3.0 (CC-by-sa) license,
  available at <http://creativecommons.org/licenses/by-sa/3.0/>
-License: CC-by-sa-3.0
-Reference: tests/sounds/LICENSE.txt
 
 Files:
- tests/third_party/cubegeom/*
- tests/aniso.c
- tests/gl_ps.c
- tests/gl_ps_packed.c
- tests/gl_ps_strides.c
- tests/gl_ps_worker.c
- tests/gl_renderers.c
- tests/gl_stride.c
- tests/gl_vertex_buffer.c
- tests/gl_vertex_buffer_pre.c
- tests/glbegin_points.c
- tests/s3tc.c
- tests/s3tc_crunch.c
- tests/sdl2_fog_density.c
- tests/sdl2_fog_exp2.c
- tests/sdl2_fog_linear.c
- tests/sdl2_fog_negative.c
- tests/sdl2_fog_simple.c
- tests/sdl2_gldrawelements.c
- tests/sdl2_glmatrixmode_texture.c
- tests/sdl_fog_density.c
- tests/sdl_fog_exp2.c
- tests/sdl_fog_linear.c
- tests/sdl_fog_negative.c
- tests/sdl_fog_simple.c
- tests/sdl_ogl.c
- tests/sdl_ogl_defaultMatrixMode.c
- tests/sdl_ogl_p.c
- tests/sdl_ogl_proc_alias.c
- tests/tex_nonbyte.c
+ test/third_party/cubegeom/*
+ test/gl_ps.c
+ test/gl_ps_packed.c
+ test/gl_ps_strides.c
+ test/gl_ps_worker.c
+ test/gl_renderers.c
+ test/gl_stride.c
+ test/gl_vertex_buffer.c
+ test/gl_vertex_buffer_pre.c
+ test/glbegin_points.c
+ test/s3tc.c
+ test/s3tc_crunch.c
+ test/tex_nonbyte.c
 Copyright:
   None (in the public domain)
 License: Public-Domain
@@ -2047,7 +1789,7 @@ Files:
 Copyright:
   Microsoft Corporation
 License: Expat
-Reference:
+ Reference:
  Xtypes/package.json
  Xtypes/LICENSE
 
@@ -2058,14 +1800,11 @@ Copyright:
 License: Unlicense
 
 Files:
- tests/third_party/sokol/sokol_gfx.h
+ test/third_party/sokol/sokol_gfx.h
 Copyright:
   2018  Andre Weissflog
-License-Grant:
- LICENSE: zlib/libpng,
- <https://github.com/floooh/sokol/blob/master/LICENSE>
 License: Zlib
-Reference:
+ LICENSE: zlib/libpng,
  <https://github.com/floooh/sokol/blob/master/LICENSE>
 Comment:
  Referenced URL contains the Zlib license.
@@ -2084,21 +1823,171 @@ Copyright:
   2006-2016  Camilla Berglund <elmindreda@glfw.org>
 License: Zlib
 
+Files:
+ test/third_party/freealut/configure
+ test/third_party/bullet/configure
+ test/third_party/poppler/configure
+ test/third_party/enet/configure
+ test/third_party/freetype/builds/unix/configure
+Copyright:
+  1992-2012  Free Software Foundation, Inc.
+License: FSFUL~configure
+
+Files:
+ test/third_party/freealut/src/Makefile.in
+ test/third_party/freealut/Makefile.in
+ test/third_party/freealut/test_suite/Makefile.in
+ test/third_party/freealut/examples/Makefile.in
+ test/third_party/freealut/admin/pkgconfig/Makefile.in
+ test/third_party/freealut/admin/Makefile.in
+ test/third_party/freealut/include/Makefile.in
+ test/third_party/bullet/src/Makefile.in
+ test/third_party/bullet/Makefile.in
+ test/third_party/bullet/Extras/Makefile.in
+ test/third_party/openjpeg/libopenjpeg/Makefile.in
+ test/third_party/openjpeg/doc/Makefile.in
+ test/third_party/openjpeg/codec/Makefile.in
+ test/third_party/openjpeg/Makefile.in
+ test/third_party/poppler/glib/Makefile.in
+ test/third_party/poppler/glib/demo/Makefile.in
+ test/third_party/poppler/glib/reference/Makefile.in
+ test/third_party/poppler/splash/Makefile.in
+ test/third_party/poppler/cpp/tests/Makefile.in
+ test/third_party/poppler/cpp/Makefile.in
+ test/third_party/poppler/utils/Makefile.in
+ test/third_party/poppler/qt4/src/Makefile.in
+ test/third_party/poppler/qt4/tests/Makefile.in
+ test/third_party/poppler/qt4/demos/Makefile.in
+ test/third_party/poppler/qt4/Makefile.in
+ test/third_party/poppler/test/Makefile.in
+ test/third_party/poppler/goo/Makefile.in
+ test/third_party/poppler/Makefile.in
+ test/third_party/poppler/poppler/Makefile.in
+ test/third_party/poppler/qt/Makefile.in
+ test/third_party/poppler/fofi/Makefile.in
+ test/third_party/enet/Makefile.in
+Copyright:
+  1994-2009  Free Software Foundation, Inc.
+License: FSFULLR~Makefile.in
+
+Files:
+ test/third_party/poppler/m4/iconv.m4
+ test/third_party/poppler/m4/libtool.m4
+ test/third_party/enet/m4/libtool.m4
+ test/third_party/poppler/m4/ltoptions.m4
+ test/third_party/enet/m4/ltoptions.m4
+ test/third_party/poppler/m4/ltsugar.m4
+ test/third_party/enet/m4/ltsugar.m4
+ test/third_party/poppler/m4/ltversion.m4
+ test/third_party/enet/m4/ltversion.m4
+ test/third_party/poppler/m4/lt~obsolete.m4
+ test/third_party/enet/m4/lt~obsolete.m4
+Copyright:
+  1996-2011  Free Software Foundation, Inc.
+License: FSFULLR
+
+Files:
+ test/third_party/freealut/admin/autotools/compile
+ test/third_party/bullet/compile
+ test/third_party/freealut/admin/autotools/missing
+ test/third_party/bullet/missing
+ test/third_party/openjpeg/missing
+ test/third_party/poppler/missing
+ test/third_party/enet/missing
+ test/third_party/freealut/admin/autotools/config.guess
+ test/third_party/bullet/config.guess
+ test/third_party/poppler/config.guess
+ test/third_party/enet/config.guess
+ test/third_party/freetype/builds/unix/config.guess
+ test/third_party/freealut/admin/autotools/config.sub
+ test/third_party/bullet/config.sub
+ test/third_party/poppler/config.sub
+ test/third_party/enet/config.sub
+ test/third_party/freetype/builds/unix/config.sub
+ test/third_party/freealut/admin/autotools/depcomp
+ test/third_party/bullet/depcomp
+ test/third_party/openjpeg/depcomp
+ test/third_party/poppler/depcomp
+ test/third_party/enet/depcomp
+Copyright:
+  1992-2011  Free Software Foundation, Inc.
+License: GPL-2+ with Autoconf-data exception
+ This file is free software;
+ you can redistribute it and/or modify it
+ under the terms of the GNU General Public License
+ as published by the Free Software Foundation;
+ either version 2 of the License,
+ or (at your option) any later version.
+ .
+ As a special exception to the GNU General Public License,
+ if you distribute this file
+ as part of a program that contains a configuration script
+ generated by Autoconf,
+ you may include it
+ under the same distribution terms
+ that you use for the rest of that program.
+
+Files:
+ test/third_party/freealut/admin/autotools/ltmain.sh
+ test/third_party/bullet/ltmain.sh
+ test/third_party/poppler/ltmain.sh
+ test/third_party/enet/ltmain.sh
+ test/third_party/freetype/builds/unix/ltmain.sh
+Copyright:
+  1996-2001, 2003-2011  Free Software Foundation, Inc.
+License: GPL-2+ with Libtool exception
+ GNU Libtool is free software;
+ you can redistribute it and/or modify it
+ under the terms of the GNU General Public License
+ as published by the Free Software Foundation;
+ either version 2 of the License,
+ or (at your option) any later version.
+ .
+ As a special exception to the GNU General Public License,
+ if you distribute this file as part of a program or library
+ that is built using GNU Libtool,
+ you may include this file
+ under the same distribution terms
+ that you use for the rest of that program.
+
+Files:
+ test/third_party/freealut/admin/autotools/install-sh
+ test/third_party/bullet/install-sh
+ test/third_party/openjpeg/install-sh
+ test/third_party/poppler/install-sh
+ test/third_party/enet/install-sh
+ test/third_party/freetype/builds/unix/install-sh
+Copyright:
+  1994  X Consortium
+License: X11
+
 Files: debian/*
 Copyright:
   2020-2022  Jonas Smedegaard <dr@jones.dk>
   2020-2022  Purism, SPC
-License-Grant:
+  2022- Debian Developers as listed in debian/changelog
+License: GPL-3+
  This packaging is free software;
  you can redistribute it and/or modify it
  under the terms of the GNU General Public License
  as published by the Free Software Foundation;
  either version 3, or (at your option) any later version.
-License: GPL-3+
-Reference: debian/copyright
 
 License: Apache-2.0
-Reference: /usr/share/common-licenses/Apache-2.0
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ .
+     http://www.apache.org/licenses/LICENSE-2.0
+ .
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ .
+ On Debian systems, the text of the Apache License Version 2.0 can be
+ found in the file /usr/share/common-licenses/Apache-2.0
 
 License: BSD-2-clause
  Redistribution and use in source and binary forms,
@@ -3078,16 +2967,59 @@ License: FTL
  <http://www.freetype.org>
 
 License: GPL-1+
-Reference: /usr/share/common-licenses/GPL-1
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 1, or (at your option)
+ any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ On Debian systems, the text of the GNU General Public License Version 1
+ can be found in the file /usr/share/common-licenses/GPL-1
 
 License: GPL-2
-Reference: /usr/share/common-licenses/GPL-2
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License version 2
+ as published by the Free Software Foundation.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ On Debian systems, the text of the GNU General Public License Version 2
+ can be found in the file /usr/share/common-licenses/GPL-2
 
 License: GPL-2+
-Reference: /usr/share/common-licenses/GPL-2
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ On Debian systems, the text of the GNU General Public License Version 2
+ can be found in the file /usr/share/common-licenses/GPL-2
 
 License: GPL-3+
-Reference: /usr/share/common-licenses/GPL-3
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ On Debian systems, the text of the GNU General Public License Version 3
+ can be found in the file /usr/share/common-licenses/GPL-3
 
 License: ISC~Erwin
  Permission to use, copy, modify, distribute and sell
@@ -3145,19 +3077,71 @@ License: Khronos
  THE MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 
 License: LGPL-2
-Reference: /usr/share/common-licenses/LGPL-2
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Library General Public
+ License version 2 as published by the Free Software Foundation.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+ .
+ On Debian systems, the text of the GNU Library General Public License
+ Version 2 can be found in the file /usr/share/common-licenses/LGPL-2
 
 License: LGPL-2+
-Reference: /usr/share/common-licenses/LGPL-2
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Library General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+ .
+ On Debian systems, the text of the GNU Library General Public License
+ Version 2 can be found in the file /usr/share/common-licenses/LGPL-2
 
 License: LGPL-2.1
-Reference: /usr/share/common-licenses/LGPL-2.1
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Library General Public
+ License version 2.1 as published by the Free Software Foundation.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+ .
+ On Debian systems, the text of the GNU Library General Public License
+ Version 2.1 can be found in the file /usr/share/common-licenses/LGPL-2.1
 
 License:  LGPL-2.1+
-Reference: /usr/share/common-licenses/LGPL-2.1
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Library General Public
+ License as published by the Free Software Foundation; either
+ version 2.1 of the License, or (at your option) any later version.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+ .
+ On Debian systems, the text of the GNU Library General Public License
+ Version 2.1 can be found in the file /usr/share/common-licenses/LGPL-2.1
 
 License:  LGPL-3
-Reference: /usr/share/common-licenses/LGPL-3
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Library General Public
+ License version 3 as published by the Free Software Foundation.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+ .
+ On Debian systems, the text of the GNU Library General Public License
+ Version 3 can be found in the file /usr/share/common-licenses/LGPL-3
 
 License: libpng-2.0
  The software is supplied "as is",
@@ -3261,7 +3245,12 @@ License: misc~SGI
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 License: MPL-2.0
-Reference: /usr/share/common-licenses/MPL-2.0
+ This Source Code Form is subject to the terms of the Mozilla Public
+ License, v. 2.0. If a copy of the MPL was not distributed with this
+ file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ .
+ On Debian systems, the text of the Mozilla Public License, v. 2.0
+ can be found in the file /usr/share/common-licenses/MPL-2.0
 
 License: NCSA~LLVM
  Permission is hereby granted, free of charge,

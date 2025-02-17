@@ -83,6 +83,7 @@ bool DontDumpShadowMemory(uptr addr, uptr length) {
 #endif  // MADV_DONTDUMP
 }
 
+#if !SANITIZER_EMSCRIPTEN
 static rlim_t getlim(int res) {
   rlimit rlim;
   CHECK_EQ(0, getrlimit(res, &rlim));
@@ -127,6 +128,7 @@ void SetAddressSpaceUnlimited() {
   setlim(RLIMIT_AS, RLIM_INFINITY);
   CHECK(AddressSpaceIsUnlimited());
 }
+#endif
 
 void Abort() {
 #if !SANITIZER_GO
@@ -150,6 +152,8 @@ int Atexit(void (*function)(void)) {
   return 0;
 #endif
 }
+
+bool CreateDir(const char *pathname) { return mkdir(pathname, 0755) == 0; }
 
 bool SupportsColoredOutput(fd_t fd) {
   return isatty(fd) != 0;
@@ -296,7 +300,7 @@ bool IsAccessibleMemoryRange(uptr beg, uptr size) {
 #endif // SANITIZER_EMSCRIPTEN
 }
 
-void PlatformPrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
+void PlatformPrepareForSandboxing(void *args) {
   // Some kinds of sandboxes may forbid filesystem access, so we won't be able
   // to read the file mappings from /proc/self/maps. Luckily, neither the
   // process will be able to load additional libraries, so it's fine to use the
@@ -391,8 +395,8 @@ SANITIZER_WEAK_ATTRIBUTE int
 real_pthread_attr_getstack(void *attr, void **addr, size_t *size);
 } // extern "C"
 
-int my_pthread_attr_getstack(void *attr, void **addr, uptr *size) {
-#if !SANITIZER_GO && !SANITIZER_MAC
+int internal_pthread_attr_getstack(void *attr, void **addr, uptr *size) {
+#if !SANITIZER_GO && !SANITIZER_APPLE
   if (&real_pthread_attr_getstack)
     return real_pthread_attr_getstack((pthread_attr_t *)attr, addr,
                                       (size_t *)size);
@@ -405,7 +409,7 @@ void AdjustStackSize(void *attr_) {
   pthread_attr_t *attr = (pthread_attr_t *)attr_;
   uptr stackaddr = 0;
   uptr stacksize = 0;
-  my_pthread_attr_getstack(attr, (void**)&stackaddr, &stacksize);
+  internal_pthread_attr_getstack(attr, (void **)&stackaddr, &stacksize);
   // GLibC will return (0 - stacksize) as the stack address in the case when
   // stacksize is set, but stackaddr is not.
   bool stack_set = (stackaddr != 0) && (stackaddr + stacksize != 0);
@@ -427,6 +431,7 @@ void AdjustStackSize(void *attr_) {
 }
 #endif // !SANITIZER_GO
 
+#if !SANITIZER_EMSCRIPTEN
 pid_t StartSubprocess(const char *program, const char *const argv[],
                       const char *const envp[], fd_t stdin_fd, fd_t stdout_fd,
                       fd_t stderr_fd) {
@@ -501,6 +506,7 @@ int WaitForProcess(pid_t pid) {
   }
   return process_status;
 }
+#endif
 
 bool IsStateDetached(int state) {
   return state == PTHREAD_CREATE_DETACHED;

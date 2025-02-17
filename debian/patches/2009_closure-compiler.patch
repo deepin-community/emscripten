@@ -5,10 +5,12 @@ Author: Jonas Smedegaard <dr@jones.dk>
 Bug-Debian: https://bugs.debian.org/974984
 Last-Update: 2022-02-11
 ---
-This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+ tools/building.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
 --- a/tools/building.py
 +++ b/tools/building.py
-@@ -725,7 +725,7 @@
+@@ -452,7 +452,7 @@
  
  
  def check_closure_compiler(cmd, args, env, allowed_to_fail):

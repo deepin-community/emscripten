@@ -1,3 +1,56 @@
+emscripten (3.1.69+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 3.1.69
+  * Update source-map-footer
+  * Install node modules
+  * Use esbuild to test for es6 syntax errors
+  * Depends binaryen >= 120
+  * Move to Javascript Maintainers
+
+  [ Julian Gilbey ]
+  * Fix provided CMake file (closes: #1081967)
+  * Simplify /usr/bin wrapper
+  * Install new binaries in /usr/bin
+  * Add dependency on ccache
+  * Fix some lintian errors and warnings
+  * Update d/copyright (though it's probably not completely correct), and
+    absorb "License-Grant" sections into "License" sections
+  * Increase LLVM dependencies to version 19 (to support
+    --no-growable-memory option) (Closes: #1091032)
+  * Switch to using standard sphinx-rtd-theme
+  * Change d/watch to rename upstream version as +dfsg instead of ~dfsg in
+    future
+
+ -- Jérémy Lal <kapouer@melix.org>  Thu, 13 Feb 2025 23:54:55 +0100
+
+emscripten (3.1.66~dfsg-2) unstable; urgency=medium
+
+  * QA upload
+  * debian/clean: Skip contrib ports
+    contrib.glfw3 downloads tarballs from github during build. To avoid the
+    download, disable the build of the glfw3 port.
+
+ -- Sebastian Ramacher <sramacher@debian.org>  Sat, 14 Sep 2024 23:54:34 +0200
+
+emscripten (3.1.66~dfsg-1) unstable; urgency=medium
+
+  [ Bastian Germann ]
+  * QA upload.
+  * d/copyright: Files-Excluded for next version.
+  * New upstream version 3.1.61~dfsg.
+  * Update patches for (re)moved files.
+  * Update to llvm 18. (Closes: #1061212)
+  * Download current emscripten-source-map.min.js.
+  * Use llvm 18 in patches
+
+  [ Sebastian Ramacher ]
+  * New upstream version 3.1.66~dfsg
+  * debian/patches/Refresh patches for new upstream version
+  * debian/missing-sources: Add new source-map-footer.js
+  * debian/rules: Update files to add/remove executable flag
+
+ -- Sebastian Ramacher <sramacher@debian.org>  Sat, 14 Sep 2024 14:58:58 +0200
+
 emscripten (3.1.6~dfsg-9) unstable; urgency=medium
 
   * QA upload.

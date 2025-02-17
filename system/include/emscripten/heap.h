@@ -25,7 +25,7 @@ extern "C" {
 uintptr_t *emscripten_get_sbrk_ptr(void);
 
 // Attempts to geometrically or linearly increase the heap so that it
-// grows by at least requested_growth_bytes new bytes. The heap size may
+// grows to the new size of at least `requested_size` bytes. The heap size may
 // be overallocated, see src/settings.js variables MEMORY_GROWTH_GEOMETRIC_STEP,
 // MEMORY_GROWTH_GEOMETRIC_CAP and MEMORY_GROWTH_LINEAR_STEP. This function
 // cannot be used to shrink the size of the heap.
@@ -36,6 +36,14 @@ size_t emscripten_get_heap_size(void);
 
 // Returns the max size of the WebAssembly heap.
 size_t emscripten_get_heap_max(void);
+
+// Direct access to the system allocator.  Use these to access that underlying
+// allocator when intercepting/wrapping the allocator API.  Works with with both
+// dlmalloc and emmalloc.
+void *emscripten_builtin_memalign(size_t alignment, size_t size);
+void *emscripten_builtin_malloc(size_t size);
+void *emscripten_builtin_calloc(size_t nmemb, size_t size);
+void emscripten_builtin_free(void *ptr);
 
 #ifdef __cplusplus
 }

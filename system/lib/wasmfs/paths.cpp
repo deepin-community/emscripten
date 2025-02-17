@@ -3,234 +3,171 @@
 // University of Illinois/NCSA Open Source License.  Both these licenses can be
 // found in the LICENSE file.
 
-#include "paths.h"
+#include <string_view>
+
 #include "file.h"
+#include "paths.h"
 #include "wasmfs.h"
 
-namespace wasmfs {
+namespace wasmfs::path {
 
-#ifdef WASMFS_DEBUG
-// Print the absolute path of a file.
-std::string getAbsPath(std::shared_ptr<File> curr) {
-  std::string result = "";
+namespace {
 
-  while (curr != wasmFS.getRootDirectory()) {
-    auto parent = curr->locked().getParent();
-    // Check if the parent exists. The parent may not exist if the CWD or one
-    // of its ancestors has been unlinked.
-    if (!parent) {
-      return "unlinked";
-    }
+static inline constexpr size_t MAX_RECURSIONS = 40;
 
-    auto parentDir = parent->dynCast<Directory>();
+ParsedFile doParseFile(std::string_view path,
+                       std::shared_ptr<Directory> base,
+                       LinkBehavior links,
+                       size_t& recursions);
 
-    auto name = parentDir->locked().getName(curr);
-    result = '/' + name + result;
-    curr = parentDir;
+ParsedFile getBaseDir(__wasi_fd_t basefd) {
+  if (basefd == AT_FDCWD) {
+    return {wasmFS.getCWD()};
   }
-
-  // Check if the cwd is the root directory.
-  if (result.empty()) {
-    result = "/";
+  auto openFile = wasmFS.getFileTable().locked().getEntry(basefd);
+  if (!openFile) {
+    return -EBADF;
   }
-
-  return result;
+  if (auto baseDir = openFile->locked().getFile()->dynCast<Directory>()) {
+    return {baseDir};
+  }
+  return -ENOTDIR;
 }
-#endif
 
-ParsedPath getParsedPath(std::vector<std::string> pathParts,
-                         long& err,
-                         std::shared_ptr<File> forbiddenAncestor,
-                         std::optional<__wasi_fd_t> baseFD) {
-  std::shared_ptr<Directory> curr;
-  auto begin = pathParts.begin();
+ParsedFile getChild(std::shared_ptr<Directory> dir,
+                    std::string_view name,
+                    LinkBehavior links,
+                    size_t& recursions) {
+  auto child = dir->locked().getChild(std::string(name));
+  if (!child) {
+    return -ENOENT;
+  }
+  if (links != NoFollowLinks) {
+    while (auto link = child->dynCast<Symlink>()) {
+      if (++recursions > MAX_RECURSIONS) {
+        return -ELOOP;
+      }
+      auto target = link->getTarget();
+      if (target.empty()) {
+        return -ENOENT;
+      }
+      auto parsed = doParseFile(target, dir, FollowLinks, recursions);
+      if (auto err = parsed.getError()) {
+        return err;
+      }
+      child = parsed.getFile();
+    }
+  }
+  return child;
+}
 
-  if (pathParts.empty()) {
-    err = -ENOENT;
-    return ParsedPath{{}, nullptr};
+ParsedParent doParseParent(std::string_view path,
+                           std::shared_ptr<Directory> curr,
+                           size_t& recursions) {
+  // Empty paths never exist.
+  if (path.empty()) {
+    return {-ENOENT};
   }
 
-  // Check if the first path element is '/', indicating an absolute path.
-  if (pathParts[0] == "/") {
+  // Handle absolute paths.
+  if (path.front() == '/') {
     curr = wasmFS.getRootDirectory();
-    begin++;
-    // If the pathname is the root directory, return the root as the child.
-    if (pathParts.size() == 1) {
-      return ParsedPath{curr->locked(), curr};
-    }
-  } else {
-    // This is a relative path. It is either relative to the current working
-    // directory if no base FD is given, or if the base FD is the special value
-    // indicating the CWD.
-    if (baseFD && *baseFD != AT_FDCWD) {
-      auto lockedOpenDir =
-        wasmFS.getFileTable().locked().getEntry(*baseFD)->locked();
-      auto openDir = lockedOpenDir.getFile();
-      if (!openDir->is<Directory>()) {
-        err = -EBADF;
-        return ParsedPath{{}, nullptr};
-      }
-      curr = openDir->dynCast<Directory>();
-    } else {
-      curr = wasmFS.getCWD();
-    }
+    path.remove_prefix(1);
   }
 
-  for (auto pathPart = begin; pathPart != pathParts.end(); ++pathPart) {
-    // Find the next entry in the current directory entry
-#ifdef WASMFS_DEBUG
-    curr->locked().printKeys();
-#endif
+  // Ignore trailing '/'.
+  while (!path.empty() && path.back() == '/') {
+    path.remove_suffix(1);
+  }
 
-    auto lockedCurr = curr->locked();
+  // An empty path here means that the path was equivalent to "/" and does not
+  // contain a child segment for us to return. The root is its own parent, so we
+  // can handle this by returning (root, ".").
+  if (path.empty()) {
+    return {std::make_pair(std::move(curr), std::string_view("."))};
+  }
 
-    // Find the relevant child for this path part.
-    std::shared_ptr<File> child;
-    std::shared_ptr<File> parent;
-    if (*pathPart == ".") {
-      child = curr;
-      parent = lockedCurr.getParent();
-    } else if (*pathPart == "..") {
-      if (curr == wasmFS.getRootDirectory()) {
-        child = curr;
-      } else {
-        child = lockedCurr.getParent()->cast<Directory>();
-      }
-      parent = child->locked().getParent();
-    } else {
-      child = lockedCurr.getChild(*pathPart);
-      parent = curr;
+  while (true) {
+    // Skip any leading '/' for each segment.
+    while (!path.empty() && path.front() == '/') {
+      path.remove_prefix(1);
     }
 
-    bool atFinalPart = pathPart == (pathParts.end() - 1);
-    if (atFinalPart) {
-      // We found the child to return, now compute the parent. Normally that is
-      // curr, but we must also handle the other cases of . and .. as well as
-      // the possible corner case of the child being moved or unlinked
-      // meanwhile (which can happen with . and .., as then we are not holding a
-      // lock on the parent).
-      if (!parent) {
-        return ParsedPath{{}, child};
-      }
-      if (parent == curr) {
-        // We already have a lock on curr; use that.
-        return ParsedPath{std::move(lockedCurr), child};
-      }
-      // Take a new lock as this is something other than curr. However, we must
-      // free our lock on curr first, to avoid a potential deadlock.
-      {
-        auto releaser = std::move(lockedCurr);
-      }
-      return ParsedPath{parent->cast<Directory>()->locked(), child};
+    // If this is the leaf segment, return.
+    size_t segment_end = path.find_first_of('/');
+    if (segment_end == std::string_view::npos) {
+      return {std::make_pair(std::move(curr), path)};
     }
 
-    if (!child) {
-      err = -ENOENT;
-      return ParsedPath{{}, nullptr};
+    // Try to descend into the child segment.
+    // TODO: Check permissions on intermediate directories.
+    auto segment = path.substr(0, segment_end);
+    auto child = getChild(curr, segment, FollowLinks, recursions);
+    if (auto err = child.getError()) {
+      return err;
     }
-
-    if (child == forbiddenAncestor) {
-      err = -EINVAL;
-      return ParsedPath{{}, nullptr};
-    }
-
-    curr = child->dynCast<Directory>();
-
-    // If file is nullptr, then the file was not a Directory.
-    // TODO: Change this to accommodate symlinks
+    curr = child.getFile()->dynCast<Directory>();
     if (!curr) {
-      err = -ENOTDIR;
-      return ParsedPath{{}, nullptr};
+      return -ENOTDIR;
     }
-
-#ifdef WASMFS_DEBUG
-    emscripten_console_log(*pathPart->c_str());
-#endif
+    path.remove_prefix(segment_end);
   }
-
-  // There was no path to process in the loop.
-  return ParsedPath{std::move(curr->locked()), nullptr};
 }
 
-std::shared_ptr<Directory> getDir(std::vector<std::string>::iterator begin,
-                                  std::vector<std::string>::iterator end,
-                                  long& err,
-                                  std::shared_ptr<File> forbiddenAncestor) {
-
-  std::shared_ptr<File> curr;
-  // Check if the first path element is '/', indicating an absolute path.
-  if (*begin == "/") {
-    curr = wasmFS.getRootDirectory();
-    begin++;
-  } else {
-    curr = wasmFS.getCWD();
+ParsedFile doParseFile(std::string_view path,
+                       std::shared_ptr<Directory> base,
+                       LinkBehavior links,
+                       size_t& recursions) {
+  auto parsed = doParseParent(path, base, recursions);
+  if (auto err = parsed.getError()) {
+    return {err};
   }
-
-  for (auto it = begin; it != end; ++it) {
-    auto directory = curr->dynCast<Directory>();
-
-    // If file is nullptr, then the file was not a Directory.
-    // TODO: Change this to accommodate symlinks
-    if (!directory) {
-      err = -ENOTDIR;
-      return nullptr;
-    }
-
-    // Find the next entry in the current directory entry
-#ifdef WASMFS_DEBUG
-    directory->locked().printKeys();
-#endif
-    curr = directory->locked().getChild(*it);
-
-    if (forbiddenAncestor) {
-      if (curr == forbiddenAncestor) {
-        err = -EINVAL;
-        return nullptr;
-      }
-    }
-
-    // Requested entry (file or directory)
-    if (!curr) {
-      err = -ENOENT;
-      return nullptr;
-    }
-
-#ifdef WASMFS_DEBUG
-    emscripten_console_log(it->c_str());
-#endif
-  }
-
-  auto currDirectory = curr->dynCast<Directory>();
-
-  if (!currDirectory) {
-    err = -ENOTDIR;
-    return nullptr;
-  }
-
-  return currDirectory;
+  auto& [parent, child] = parsed.getParentChild();
+  return getChild(parent, child, links, recursions);
 }
 
-// TODO: Check for trailing slash, i.e. /foo/bar.txt/
-// Currently any trailing slash is ignored.
-std::vector<std::string> splitPath(char* pathname) {
-  std::vector<std::string> pathParts;
-  char newPathName[strlen(pathname) + 1];
-  strcpy(newPathName, pathname);
+} // anonymous namespace
 
-  // TODO: Other path parsing edge cases.
-  char* current;
-  // Handle absolute path.
-  if (newPathName[0] == '/') {
-    pathParts.push_back("/");
+ParsedParent parseParent(std::string_view path, __wasi_fd_t basefd) {
+  auto base = getBaseDir(basefd);
+  if (auto err = base.getError()) {
+    return err;
   }
-
-  current = strtok(newPathName, "/");
-  while (current != NULL) {
-    pathParts.push_back(current);
-    current = strtok(NULL, "/");
-  }
-
-  return pathParts;
+  size_t recursions = 0;
+  auto baseDir = base.getFile()->cast<Directory>();
+  return doParseParent(path, baseDir, recursions);
 }
 
-} // namespace wasmfs
+ParsedFile
+parseFile(std::string_view path, __wasi_fd_t basefd, LinkBehavior links) {
+  auto base = getBaseDir(basefd);
+  if (auto err = base.getError()) {
+    return err;
+  }
+  size_t recursions = 0;
+  auto baseDir = base.getFile()->cast<Directory>();
+  return doParseFile(path, baseDir, links, recursions);
+}
+
+ParsedFile getFileAt(__wasi_fd_t fd, std::string_view path, int flags) {
+  if ((flags & AT_EMPTY_PATH) && path.size() == 0) {
+    // Don't parse a path, just use `dirfd` directly.
+    if (fd == AT_FDCWD) {
+      return {wasmFS.getCWD()};
+    }
+    auto openFile = wasmFS.getFileTable().locked().getEntry(fd);
+    if (!openFile) {
+      return {-EBADF};
+    }
+    return {openFile->locked().getFile()};
+  }
+  auto links = (flags & AT_SYMLINK_NOFOLLOW) ? NoFollowLinks : FollowLinks;
+  return path::parseFile(path, fd, links);
+}
+
+ParsedFile getFileFrom(std::shared_ptr<Directory> base, std::string_view path) {
+  size_t recursions = 0;
+  return doParseFile(path, base, FollowLinks, recursions);
+}
+
+} // namespace wasmfs::path

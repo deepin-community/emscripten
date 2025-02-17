@@ -1,35 +1,40 @@
 Source: emscripten
 Section: devel
 Priority: optional
-Maintainer: Debian QA Group <packages@qa.debian.org>
+Maintainer: Debian Javascript Maintainers <pkg-javascript-devel@alioth-lists.debian.net>
+Uploaders: Jérémy Lal <kapouer@melix.org>
 Build-Depends:
- binaryen <!nocheck>,
- clang-15 <!nocheck>,
+ binaryen (>= 120~) <!nocheck>,
+ ccache,
+ clang-19 <!nocheck>,
  cmake <!nocheck>,
  cmark-gfm <!nodoc>,
  debhelper-compat (= 13),
  dh-sequence-python3,
- eslint <!nocheck>,
+ esbuild <!nocheck>,
  fonts-liberation <!nocheck>,
  help2man,
  htmlmin <!nocheck>,
  jq,
  libjs-source-map,
  libsimde-dev,
- lld-15 <!nocheck>,
- llvm-15 <!nocheck>,
+ lld-19 <!nocheck>,
+ llvm-19 <!nocheck>,
  node-acorn <!nocheck>,
  node-source-map <!nocheck>,
  nodejs (>= 12.16) <!nocheck>,
+ dh-nodejs <!nocheck>,
  python3,
  python3-numpy <!nocheck>,
  python3-ply <!nocheck>,
  scons <!nocheck>,
  wabt (>= 1.0.24-2~) <!nocheck>,
 Build-Depends-Indep:
- dh-sequence-sphinxdoc <!nocheck>,
+ dh-sequence-sphinxdoc <!nodoc>,
+ python3-doc <!nodoc>,
  python3-sphinx <!nodoc>,
-Standards-Version: 4.6.0
+ python3-sphinx-rtd-theme <!nodoc>,
+Standards-Version: 4.7.0
 Homepage: http://emscripten.org/
 Vcs-Browser: https://salsa.debian.org/debian/emscripten
 Vcs-Git: https://salsa.debian.org/debian/emscripten.git
@@ -39,9 +44,10 @@ Package: emscripten
 Architecture: all
 Depends:
  binaryen,
- clang-15,
- lld-15,
- llvm-15,
+ ccache,
+ clang-19,
+ lld-19,
+ llvm-19,
  node-acorn,
  nodejs (>= 12),
  ${misc:Depends},
@@ -86,10 +92,11 @@ Section: doc
 Depends:
  ${misc:Depends},
  ${sphinxdoc:Depends},
+ python3-doc,
 Built-Using:
  ${sphinxdoc:Built-Using},
 Architecture: all
-Description: LLVM-to-JavaScript Compiler
+Description: LLVM-to-JavaScript Compiler (documentation)
  Emscripten is an LLVM to JavaScript compiler. It takes LLVM bitcode, also
  called LLVM IR (which can be generated from C/C++ using Clang, or any other
  language that can be converted into LLVM bitcode) and compiles that into
